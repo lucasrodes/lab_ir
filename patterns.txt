@@ -1,0 +1,40 @@
+//
+//  Information retrieval course
+//  First version: Johan Boye 2016
+//
+// In this file you can put your regular expressions
+// for matching non-standard words (like mail addresses).
+//
+// As you have probably already understood, lines beginning
+// with "//" are comments.
+
+// Twenty-four seven
+\d+/\d+
+
+// Composed words (e.g. miss-classified-stuff)
+([a-z]+-)+[a-z]+
+
+// Clitics (e.g. she's, 'em, etc.) 
+[a-z]*'[a-z]+$
+
+// Links
+http[s]?:/\S+
+
+// E-mails
+\S+@[a-z.]+
+
+// Abbreviations (e.g. u.s.)
+[a-z]+[.][a-z]+[.]
+
+// symbol "--"
+--
+
+// IPs/sections (e.g. 127.123.123.123, 1.2.3; telephones 121-121-11, 1213-xxx; numbers 1,232)
+(\d+[,.-])+\d+
+\d+[-][x]+
+
+// +1
+[+]\d+
+
+// Hours
+\d+[:]\d+[:]\d+
