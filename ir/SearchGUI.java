@@ -421,7 +421,7 @@ public class SearchGUI extends JFrame {
 	    String t = it.next();
 	    PostingsList p = this.indexer.index.getPostings( t );
 
-        System.out.print(t + " || " + p.toString() + "\n");
+        /*System.out.print(t + " || " + p.toString() + "\n");*/
      	}
      	//this.indexer.index.printRecentRegister();
     }

@@ -20,12 +20,9 @@ import com.google.gson.reflect.TypeToken;
  */
 public class HashedIndex implements Index {
 
+    public MyMap index = new MyMap();
     /* [MODIFIED] Maps indices to document names */
     public Map<String, String> docIDs = new HashMap<String,String>();
-    // Maps tokens with corresponding termIDs
-    private Map<String,Integer> termsID = new HashMap<String,Integer>();
-    // Tokens mapping to PostingsList
-    private HashMap<String, PostingsList> indexInMemory = new HashMap<String, PostingsList>();
     // Used when indexing to map tokens to termIDs
     private int termID;
     private int cashLimit = 4;//1000;
@@ -46,15 +43,15 @@ public class HashedIndex implements Index {
      */
     public void insert( String token, int docID, int offset ) {
         // Check if token is contained in termsID
-        if (this.termsID.containsKey(token)){
+        if (this.index.containsKey(token)){
             // Check if it corresponding PostingsList is in memory
-            //if (this.indexInMemory.containsKey(token)){
+            if (this.index.containsKeyInMemory(token))
                 // Update its corresponding postingslist with new occurence
-                this.indexInMemory.get(token).insert(docID, offset);
+                this.index.getFromMemory(token).insert(docID, offset);
             //}
-            /*else{
+            else{
                 // Load the PostingsList
-                String filename = "postings/t"+termsID.get(token)+".json";
+                /*String filename = "postings/t"+termsID.get(token)+".json";
                 PostingsList post_tmp = new PostingsList();
                 try(Reader reader = new FileReader(filename)){
                     post_tmp = (new Gson()).fromJson(reader, PostingsList.class);
@@ -64,54 +61,25 @@ public class HashedIndex implements Index {
                 // Add new occurence
                 post_tmp.insert(docID, offset);
                 // Keep in memory
-                this.indexInMemory.put(token, post_tmp);
-            }*/
+                this.indexInMemory.put(token, post_tmp);*/
+                this.index.getFromMemory(token).insert(docID, offset);
+            }
         }
         else{
-            // Add new token to termsID, with its corresponding termID
-            this.termsID.put(token, termID(token));
             // Create new postingslist for the token and store it in 
             // indexInMemory.
             PostingsList postingslist = new PostingsList();
             postingslist.insert(docID, offset);
-            this.indexInMemory.put(token, postingslist);
+            this.index.put(token, postingslist);
         }
-        System.err.println(token);
+        //System.err.println(token);
         // BackUp if necessary
-        if (this.termID%this.cashLimit == 0)
-            this.backUp();
+        if (this.index.isFull())
+            this.index.backUp();
     }
 
-
-    /** [NEW]
-     * Obtain termID of term, only used when indexing.
-     */ 
-    public Integer termID(String token){
-        Integer res;
-        if (this.termsID.containsKey(token)){
-            res = this.termsID.get(token);//.toString();
-        }
-        else{
-            res = this.termID;//Integer.toString(this.termID);
-            this.termsID.put(token, termID);
-            this.termID++;   
-        }
-        return res;
-    }
 
     // MEMORY MANAGEMENT --------------------------------------------------
-
-
-    /** Backs up the map of postings */
-    public void backUp(){
-        /*for (Map.Entry<Integer, PostingsList> entry : this.indexInMemory.entrySet()) {
-            saveJSON("postings/t"+entry.getKey()+".json", entry.getValue());
-            if (entry.getKey()%1000==0)
-                System.err.println("storing "+ entry.getKey());
-        }*/
-        System.err.println("back up");
-        //saveJSON("postings/termsID.json", this.termsID);
-    }
 
 
     /** [NEW]
@@ -121,13 +89,8 @@ public class HashedIndex implements Index {
      */
     public void recover(){
         // Loads hashmap containing mapping between tokens and termIDs 
-        try(Reader reader = new FileReader("postings/termsID.json")){
-            this.termsID = (new Gson()).fromJson(reader, 
-            new TypeToken<Map<String, Integer>>(){}.getType());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
+        this.index.recover();
+        // Recover docIDs
         try(Reader reader = new FileReader("postings/docIDs.json")){
             this.docIDs = (new Gson()).fromJson(reader, 
             new TypeToken<Map<String, String>>(){}.getType());
@@ -141,13 +104,7 @@ public class HashedIndex implements Index {
      *  Saves the token-termIDs map and list with document names
      */
     public void saveAll(){
-        // Store postings 
-        for (Map.Entry<String, PostingsList> entry : this.indexInMemory.entrySet()) {
-            saveJSON("postings/t"+termsID.get(entry.getKey())+".json", entry.getValue());
-            if (termsID.get(entry.getKey())%1000==0)
-                System.err.println("storing "+ entry.getKey());
-        }
-        saveJSON("postings/termsID.json", this.termsID);
+        this.index.saveAll();
         // Store mapping ID<->document names
         this.saveJSON("postings/docIDs.json", this.docIDs);
     }  
@@ -174,7 +131,7 @@ public class HashedIndex implements Index {
      */
     public Iterator<String> getDictionary() {
         //return this.index.keySet().iterator();
-        return this.termsID.keySet().iterator();
+        return this.index.keySet().iterator();
     }    
 
 
@@ -208,15 +165,7 @@ public class HashedIndex implements Index {
      *  if the term is not in the index.
      */
     public PostingsList getPostings( String token ) {
-       // Read JSON file associated to token and return it as a postingslist
-        String filename = "postings/t"+termsID.get(token)+".json";
-        PostingsList post_tmp = new PostingsList();
-        try(Reader reader = new FileReader(filename)){
-            post_tmp = (new Gson()).fromJson(reader, PostingsList.class);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return post_tmp;
+        return this.index.getFromDisk(token);
         // Store it in PostingsList format
     }
 
@@ -231,7 +180,7 @@ public class HashedIndex implements Index {
         LinkedList<PostingsList> listQueriedPostings = new LinkedList<PostingsList>();
         for (int i = 0; i<query.size(); i++){
             // If any query has zero matches, return 0 results
-            if (!this.termsID.containsKey(query.terms.get(i)))
+            if (!this.index.containsKey(query.terms.get(i)))
                 return null;
             // Otherwise store postings in the list
             listQueriedPostings.add(this.getPostings(query.terms.get(i)));
@@ -378,7 +327,7 @@ public class HashedIndex implements Index {
         LinkedList<PostingsList> listQueriedPostings = new LinkedList<PostingsList>();
         for (int i = 0; i<query.size(); i++){
             // If any query has zero matches, return 0 results
-            if (!this.termsID.containsKey(query.terms.get(i)))
+            if (!this.index.containsKey(query.terms.get(i)))
                 return null;
             // Otherwise store postings in the list
             listQueriedPostings.add(this.getPostings(query.terms.get(i)));

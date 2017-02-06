@@ -36,7 +36,6 @@ public interface Index {
     public HashMap<String,Integer> docLengths = new HashMap<String,Integer>();
 
     public void saveAll();
-    public void backUp();
     public void recover();
     public void insert( String token, int docID, int offset );
     public Iterator<String> getDictionary();
