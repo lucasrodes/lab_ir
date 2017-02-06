@@ -443,7 +443,7 @@ public class SearchGUI extends JFrame {
 			// Just recover data otherwise
 			s.recover();
 		}
-		s.debugg();
+		//s.debugg();
 	}
 }
  
