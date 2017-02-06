@@ -21,7 +21,6 @@ import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.event.*;
 import java.util.Iterator;
-
 /**
  *   A graphical interface to the information retrieval system.
  */
@@ -62,7 +61,6 @@ public class SearchGUI extends JFrame {
 		
     /** The file containing the pageranks. */
     String rank_file = "";
-
 
     /*  
      *   Common GUI resources
@@ -171,7 +169,7 @@ public class SearchGUI extends JFrame {
 		    // we don't want to search at the same time we're indexing new files
 		    // (this might corrupt the index).
 		    synchronized ( indexLock ) {
-			results = indexer.index.search( query, queryType, rankingType, structureType ); 
+				results = indexer.index.search( query, queryType, rankingType, structureType ); 
 		    }
 		    StringBuffer buf = new StringBuffer();
 		    if ( results != null ) {
@@ -180,19 +178,19 @@ public class SearchGUI extends JFrame {
 			    buf.append( " " + i + ". " );
 			    String filename = indexer.index.docIDs.get( "" + results.get(i).docID );
 			    if ( filename == null ) {
-				buf.append( "" + results.get(i).docID );
+					buf.append( "" + results.get(i).docID );
 			    }
 			    else {
-				buf.append( filename );
+					buf.append( filename );
 			    }
 			    if ( queryType == Index.RANKED_QUERY ) {
-				buf.append( "   " + String.format( "%.5f", results.get(i).score )); 
+					buf.append( "   " + String.format( "%.5f", results.get(i).score )); 
 			    }
 			    buf.append( "\n" );
 			}
 		    }
 		    else {
-			buf.append( "\nFound 0 matching document(s)\n\n" );
+				buf.append( "\nFound 0 matching document(s)\n\n" );
 		    }
 		    resultWindow.setText( buf.toString() );
 		    resultWindow.setCaretPosition( 0 );
@@ -257,6 +255,7 @@ public class SearchGUI extends JFrame {
 	
 	Action quit = new AbstractAction() {
 		public void actionPerformed( ActionEvent e ) {
+		    clean();
 		    System.exit( 0 );
 		}
 	    };
@@ -342,14 +341,40 @@ public class SearchGUI extends JFrame {
 	synchronized ( indexLock ) {
 	    resultWindow.setText( "\n  Indexing, please wait..." );
 	    for ( int i=0; i<dirNames.size(); i++ ) {
-		File dokDir = new File( dirNames.get( i ));
-		indexer.processFiles( dokDir );
+			File dokDir = new File( dirNames.get( i ));
+			indexer.processFiles( dokDir );
 	    }
 	    indexer.index.cleanup();
+	    // Store index
+	    this.indexer.index.saveAll();
 	    resultWindow.setText( "\n  Done!" );
 	}
     };
 
+
+    /** [NEW]
+	 * Load back the hashmap linking tokens with termIDs
+     */
+    private void recover(){
+	indexer = new Indexer( patterns_file );
+	synchronized ( indexLock ) {
+	    resultWindow.setText( "\n  Recovering indexes, please wait..." );
+	    indexer.index.recover();
+	    resultWindow.setText( "\n  Done!" );
+	}
+    };
+
+
+    /** [NEW]
+     * Remove all the files in the postings folder since we did not specify
+     * that we wanted to store them
+     */
+    public void clean(){
+    	File dir = new File("postings");
+    	for(File file: dir.listFiles()) 
+	    if (!file.isDirectory()) 
+	        file.delete();
+    }
 
     /* ----------------------------------------------- */
 
@@ -390,25 +415,35 @@ public class SearchGUI extends JFrame {
 	}				    
     }
 
-    public void debugg(Indexer indexer){
-    	Iterator<String> it = indexer.index.getDictionary();
+    public void debugg(){
+    	Iterator<String> it = this.indexer.index.getDictionary();
 	    while(it.hasNext()){
 	    String t = it.next();
-	    PostingsList p = indexer.index.getPostings( t );
+	    PostingsList p = this.indexer.index.getPostings( t );
 
         System.out.print(t + " || " + p.toString() + "\n");
      	}
+     	//this.indexer.index.printRecentRegister();
     }
     /* ----------------------------------------------- */
 
 
+    // [MODIFIED]
     public static void main( String[] args ) {
-	SearchGUI s = new SearchGUI();
-	s.decodeArgs( args );
-	s.createGUI();
-	s.index();
-	//s.debugg(s.indexer);
-    }
-
+		SearchGUI s = new SearchGUI();
+		s.decodeArgs( args );
+		s.createGUI();
+		// Check if we have some file stored
+		File f = new File("postings/t1.json");
+		if(!f.exists()){
+			// Index if we do not
+	    	s.index();
+		}
+		else{
+			// Just recover data otherwise
+			s.recover();
+		}
+		s.debugg();
+	}
 }
  

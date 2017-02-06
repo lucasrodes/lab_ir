@@ -21,12 +21,14 @@ public class PostingsList implements Serializable {
 
     public PostingsList(){}
 
+
     /**  Number of postings in this list  */
     public int size() {
-	return list.size();
+	   return list.size();
     }
 
-    /* Checks if the list of postings is empty */
+
+    /** Checks if the list of postings is empty */
     public boolean isEmpty(){
         if (size()==0) {
             return true;
@@ -34,33 +36,44 @@ public class PostingsList implements Serializable {
         return false;
     }
 
-    /**  Returns the ith posting */
+
+    /**  i-th posting */
     public PostingsEntry get( int i ) {
-	return list.get( i );
+	   return list.get( i );
     }
 
-    /** Get last docID in postingslist **/
+
+    /** Last docID in postingslist **/
     public PostingsEntry getLast(){
         return this.list.getLast();
     }
 
 
-    /* Add new posting */
-    /* Corresponding to docID */
+
+    /** [NEW]
+     *  Add new posting Corresponding to docID 
+     */
     public void insert(int docID){
         this.list.add(new PostingsEntry(docID, 0));
     }
 
-    /* Corresponding to docID and its corresponding positional index pos */
+
+    /** [NEW]
+     *  Corresponding to docID and its corresponding positional index pos 
+     */
     public void insert(int docID, int pos){
-        // Check if the list of postings is empty or there is no entry
-        // for docID in the list. Add new postingsentry with (docID, pos).
+        /* Check if the list of postings is empty or there is no entry
+           for docID in the list. Add new postingsentry with (docID, pos). */
         if (this.isEmpty()||this.getLast().docID != docID)
             this.list.add(new PostingsEntry(docID, 0, pos));
         else
             this.getLast().insertPosition(pos);
     }
 
+
+    /** [NEW]
+     *  
+     */
     public String toString(){
 
         String s = "";

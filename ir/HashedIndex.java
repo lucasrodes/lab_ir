@@ -10,74 +10,187 @@
 
 package ir;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.Comparator;
-import java.util.Collections;
+import java.util.*;
+import java.io.*;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 /**
  *   Implements an inverted index as a Hashtable from words to PostingsLists.
  */
 public class HashedIndex implements Index {
 
-    /** The index as a hashtable. */
-    private HashMap<String,PostingsList> index = new HashMap<String,PostingsList>();
+    /* [MODIFIED] Maps indices to document names */
+    public Map<String, String> docIDs = new HashMap<String,String>();
+    // Maps tokens with corresponding termIDs
+    private Map<String,Integer> termsID = new HashMap<String,Integer>();
+    // Tokens mapping to PostingsList
+    private HashMap<String, PostingsList> indexInMemory = new HashMap<String, PostingsList>();
+    // Used when indexing to map tokens to termIDs
+    private int termID;
+    private int cashLimit = 4;//1000;
+    // Keep track of recent queries
+    // private LinkedList<String,
 
 
-    /**
-     *  Accounts for token appearing in docID, by Inserts this token in index.
+    /** Constructor */
+    public HashedIndex(){
+        this.termID = 0;
+    }
+
+    // INDEXING MANAGEMENT --------------------------------------------------
+
+    /** [MODIFIED]
+     *  Inserts new information provided by new occurence of token 
+     *  in docID at offset.
      */
     public void insert( String token, int docID, int offset ) {
-        /* Check if Map already contains the term token and if it already
-           appeared in docID */
-        if(this.index.containsKey(token))// &&
-            //this.index.get(token).getLast().docID != docID)
-            //System.out.println("e");//
-            this.index.get(token).insert(docID, offset);
-            //this.index.get(token).insert(docID);
-
-        /* Dictionary does not contain the term token, so we add a new
-           postingslist with docID and the corresponding positional index 
-           */
+        // Check if token is contained in termsID
+        if (this.termsID.containsKey(token)){
+            // Check if it corresponding PostingsList is in memory
+            //if (this.indexInMemory.containsKey(token)){
+                // Update its corresponding postingslist with new occurence
+                this.indexInMemory.get(token).insert(docID, offset);
+            //}
+            /*else{
+                // Load the PostingsList
+                String filename = "postings/t"+termsID.get(token)+".json";
+                PostingsList post_tmp = new PostingsList();
+                try(Reader reader = new FileReader(filename)){
+                    post_tmp = (new Gson()).fromJson(reader, PostingsList.class);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                // Add new occurence
+                post_tmp.insert(docID, offset);
+                // Keep in memory
+                this.indexInMemory.put(token, post_tmp);
+            }*/
+        }
         else{
-            //System.out.println("e");
+            // Add new token to termsID, with its corresponding termID
+            this.termsID.put(token, termID(token));
+            // Create new postingslist for the token and store it in 
+            // indexInMemory.
             PostingsList postingslist = new PostingsList();
             postingslist.insert(docID, offset);
-            this.index.put(token, postingslist);
+            this.indexInMemory.put(token, postingslist);
+        }
+        System.err.println(token);
+        // BackUp if necessary
+        if (this.termID%this.cashLimit == 0)
+            this.backUp();
+    }
+
+
+    /** [NEW]
+     * Obtain termID of term, only used when indexing.
+     */ 
+    public Integer termID(String token){
+        Integer res;
+        if (this.termsID.containsKey(token)){
+            res = this.termsID.get(token);//.toString();
+        }
+        else{
+            res = this.termID;//Integer.toString(this.termID);
+            this.termsID.put(token, termID);
+            this.termID++;   
+        }
+        return res;
+    }
+
+    // MEMORY MANAGEMENT --------------------------------------------------
+
+
+    /** Backs up the map of postings */
+    public void backUp(){
+        /*for (Map.Entry<Integer, PostingsList> entry : this.indexInMemory.entrySet()) {
+            saveJSON("postings/t"+entry.getKey()+".json", entry.getValue());
+            if (entry.getKey()%1000==0)
+                System.err.println("storing "+ entry.getKey());
+        }*/
+        System.err.println("back up");
+        //saveJSON("postings/termsID.json", this.termsID);
+    }
+
+
+    /** [NEW]
+     * Recovers the essential files required to retrieve information in memory. 
+     * This includes hashmap mapping tokens with respective terms and list of 
+     * names of the retrieved documents.
+     */
+    public void recover(){
+        // Loads hashmap containing mapping between tokens and termIDs 
+        try(Reader reader = new FileReader("postings/termsID.json")){
+            this.termsID = (new Gson()).fromJson(reader, 
+            new TypeToken<Map<String, Integer>>(){}.getType());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try(Reader reader = new FileReader("postings/docIDs.json")){
+            this.docIDs = (new Gson()).fromJson(reader, 
+            new TypeToken<Map<String, String>>(){}.getType());
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
 
-    /**
+    /** [NEW] 
+     *  Saves the token-termIDs map and list with document names
+     */
+    public void saveAll(){
+        // Store postings 
+        for (Map.Entry<String, PostingsList> entry : this.indexInMemory.entrySet()) {
+            saveJSON("postings/t"+termsID.get(entry.getKey())+".json", entry.getValue());
+            if (termsID.get(entry.getKey())%1000==0)
+                System.err.println("storing "+ entry.getKey());
+        }
+        saveJSON("postings/termsID.json", this.termsID);
+        // Store mapping ID<->document names
+        this.saveJSON("postings/docIDs.json", this.docIDs);
+    }  
+
+
+    /** [NEW]
+     * Saves object o as a JSON file called fileName 
+     */
+    public void saveJSON(String fileName, Object o){
+        Gson gson = new Gson();
+        try(FileWriter writer = new FileWriter(fileName)){
+            gson.toJson(o, writer);
+            //System.err.println("\n Token stored");
+        }catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    // ------------------------------------------------------------------------
+    
+    /** [MODIFIED]
      *  Returns all the words in the index.
      */
     public Iterator<String> getDictionary() {
-        return this.index.keySet().iterator();
-    }
+        //return this.index.keySet().iterator();
+        return this.termsID.keySet().iterator();
+    }    
 
 
-    /**
-     *  Returns the postings for a specific term, or null
-     *  if the term is not in the index.
-     */
-    public PostingsList getPostings( String token ) {
-	   return this.index.get(token);
-    }
-
+    // QUERIES MANAGEMENT --------------------------------------------------
 
     /**
      *  Searches the index for postings matching the query.
      */
     public PostingsList search( Query query, int queryType, int rankingType, 
         int structureType ) {
-        // Construct a linkedlist with the postings of all queries
         if (query.size()>0){
             switch (queryType){
                 case Index.INTERSECTION_QUERY: return intersect(query);
                 case Index.PHRASE_QUERY: return phrase_query(query);
                 case Index.RANKED_QUERY:
-                    System.out.println("ranked query");
+                    System.out.println("ranked query - not yet implemented");
                     return null;
                 default: 
                     System.out.println("not valid query");
@@ -85,34 +198,55 @@ public class HashedIndex implements Index {
             }
         }
         else
+            // Query was empty
             return null;
     }
 
 
-    /* Finds documents containing the query as a phrase */
-    // TODO: Skip pointer
+    /** [MODIFIED]
+     *  Returns the postings for a specific term, or null
+     *  if the term is not in the index.
+     */
+    public PostingsList getPostings( String token ) {
+       // Read JSON file associated to token and return it as a postingslist
+        String filename = "postings/t"+termsID.get(token)+".json";
+        PostingsList post_tmp = new PostingsList();
+        try(Reader reader = new FileReader(filename)){
+            post_tmp = (new Gson()).fromJson(reader, PostingsList.class);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return post_tmp;
+        // Store it in PostingsList format
+    }
+
+
+    /** [NEW] 
+     * Finds documents containing the query as a phrase 
+     * TODO: Skip pointer
+     */
     public PostingsList phrase_query(Query query){
         
         // List with postings corresponding to the queries
-        LinkedList<PostingsList> l = new LinkedList<PostingsList>();
+        LinkedList<PostingsList> listQueriedPostings = new LinkedList<PostingsList>();
         for (int i = 0; i<query.size(); i++){
             // If any query has zero matches, return 0 results
-            if (!this.index.containsKey(query.terms.get(i)))
+            if (!this.termsID.containsKey(query.terms.get(i)))
                 return null;
             // Otherwise store postings in the list
-            l.add(this.getPostings(query.terms.get(i)));
+            listQueriedPostings.add(this.getPostings(query.terms.get(i)));
         }
 
-        PostingsList result = l.get(0);
+        PostingsList result = listQueriedPostings.get(0);
 
-        // In case only one word is submitted
-        if (l.size() == 1){
+        // In case only one word is queried
+        if (listQueriedPostings.size() == 1){
             return result;
         }
 
         // Apply algorithm as many times as words in the query
-        for(int i = 1; i < l.size(); i++){
-            result = phrase_query(result, l.get(i));
+        for(int i = 1; i < listQueriedPostings.size(); i++){
+            result = phrase_query(result, listQueriedPostings.get(i));
             if (result.isEmpty()){
                 return null;
             }
@@ -121,14 +255,11 @@ public class HashedIndex implements Index {
     }
 
 
-    /* Finds documents containing a two-words phrase */
+    /** [NEW] 
+     *  Finds documents containing a two-words phrase 
+     */
     public PostingsList phrase_query(PostingsList l1, PostingsList l2){
         
-        /*if(l1.isEmpty() || l2.isEmpty()){
-            System.out.println("null");
-            return null;
-        }*/
-
         PostingsList phrase = new PostingsList();
         
         // Counters to iterate docIDs
@@ -151,7 +282,7 @@ public class HashedIndex implements Index {
         int pp2;
 
         while(true){
-            // docID match
+            // docID match (1/2) //
             if (p1.docID == p2.docID){
                 // Obtain list of positional indices
                 ll1 = p1.positions;
@@ -165,7 +296,7 @@ public class HashedIndex implements Index {
 
                 // Search if the phrase exists
                 while(true){
-                    // Match, consecutive words
+                    // Match, consecutive words (2/2) - EUREKA! //
                     if (pp1+1 == pp2){
                         // Save found match (docID and positional index of last
                         // word)
@@ -238,31 +369,35 @@ public class HashedIndex implements Index {
     }
     
 
-    /* Intersects a set of queries */
-    // TODO: Skip pointer
+    /** [NEW]
+     *  Intersects a set of queries *
+     *  TODO: Skip pointer
+     */
     public PostingsList intersect(Query query){
-        
         // List with postings corresponding to the queries
-        LinkedList<PostingsList> l = new LinkedList<PostingsList>();
+        LinkedList<PostingsList> listQueriedPostings = new LinkedList<PostingsList>();
         for (int i = 0; i<query.size(); i++){
             // If any query has zero matches, return 0 results
-            if (!this.index.containsKey(query.terms.get(i)))
+            if (!this.termsID.containsKey(query.terms.get(i)))
                 return null;
-
             // Otherwise store postings in the list
-            l.add(this.getPostings(query.terms.get(i)));
+            listQueriedPostings.add(this.getPostings(query.terms.get(i)));
         }
 
         // Order the posting list by increasing document frequency
-        l = sortByIncreasingFrequency(l); 
+        listQueriedPostings = sortByIncreasingFrequency(listQueriedPostings); 
 
-        PostingsList result = l.get(0);
-        if (l.size() == 1){
+
+        PostingsList result = listQueriedPostings.get(0);
+        
+        // In case only one word is queried
+        if (listQueriedPostings.size() == 1){
             return result;
         }
 
-        for(int i = 1; i < l.size(); i++){
-            result = intersect(result, l.get(i));
+        // Apply algorithm as many times as words in the query
+        for(int i = 1; i < listQueriedPostings.size(); i++){
+            result = intersect(result, listQueriedPostings.get(i));
             if (result.isEmpty()){
                 return null;
             }
@@ -271,7 +406,63 @@ public class HashedIndex implements Index {
     }
 
 
-    /* Sorts a set of postings list according to the document frequency */
+
+    /** [NEW]
+     * Intersects two queries (represented by the postingslist) 
+     */
+    public PostingsList intersect(PostingsList l1, PostingsList l2){
+        
+        PostingsList intersection = new PostingsList();
+        
+        // Counters to iterate docIDs
+        int count1 = 0;
+        int count2 = 0;
+
+        // First posting 
+        PostingsEntry p1 = l1.get(0);
+        PostingsEntry p2 = l2.get(0);
+
+        while(true){
+            // Match - EUREKA! //
+            if (p1.docID == p2.docID){
+                // Add match
+                intersection.insert(p1.docID);
+                // Increase counters
+                count1++;
+                count2++;
+                // Go to next postings (check for nullpointer)
+                if (count1<l1.size() && count2<l2.size()){
+                    p1 = l1.get(count1);
+                    p2 = l2.get(count2);
+                }
+                else
+                    break;
+            }
+            // No match
+            else if (p1.docID < p2.docID){
+                count1++;
+                if (count1<l1.size())
+                    p1 = l1.get(count1);
+                else
+                    break;
+            }
+            // No match
+            else{
+                count2++;
+                if (count2<l2.size())
+                    p2 = l2.get(count2);
+                else
+                    break;
+            }
+        }
+
+        return intersection;
+    }
+
+
+    /** [NEW]
+     * Sorts a set of postings list according to the document frequency 
+     */
     public LinkedList<PostingsList> sortByIncreasingFrequency(LinkedList<PostingsList> l){
         Collections.sort(l, new Comparator<PostingsList>(){
         @Override
@@ -289,56 +480,16 @@ public class HashedIndex implements Index {
     }
 
 
-    /* Intersects two queries */
-    public PostingsList intersect(PostingsList l1, PostingsList l2){
-        
-        /*if(l1.isEmpty() || l2.isEmpty()){
-            System.out.println("null");
-            return null;
-        }*/
-
-        PostingsList intersection = new PostingsList();
-        
-        int count1 = 0;
-        int count2 = 0;
-
-        PostingsEntry p1 = l1.get(0);
-        PostingsEntry p2 = l2.get(0);
-        while(true){
-            if (p1.docID == p2.docID){
-                intersection.insert(p1.docID);
-                count1++;
-                count2++;
-                if (count1<l1.size() && count2<l2.size()){
-                    p1 = l1.get(count1);
-                    p2 = l2.get(count2);
-                }
-                else
-                    break;
-            }
-            else if (p1.docID < p2.docID){
-                count1++;
-                if (count1<l1.size())
-                    p1 = l1.get(count1);
-                else
-                    break;
-            }
-            else{
-                count2++;
-                if (count2<l2.size())
-                    p2 = l2.get(count2);
-                else
-                    break;
-            }
-        }
-
-        return intersection;
-    }
-
-
     /**
      *  No need for cleanup in a HashedIndex.
      */
-    public void cleanup() {
+    public void cleanup() {}
+
+
+    /** [NEW]
+     *  Debugging, checking if recent ordering with linkedhashmap works
+     */
+    public void printRecentRegister(){
+        //this.indexDisk.printRecentRegister();
     }
 }

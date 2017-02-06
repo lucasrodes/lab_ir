@@ -17,10 +17,12 @@ public class PostingsEntry implements Comparable<PostingsEntry>, Serializable {
     public LinkedList<Integer> positions = new LinkedList<Integer>();
     public double score;
 
+    /** Constructors */
     public PostingsEntry( int dI, double sc){
         this.docID = dI;
         this.score = sc;
     }
+
     public PostingsEntry( int dI, double sc, int pos){
         this.docID = dI;
         this.score = sc;
@@ -38,16 +40,17 @@ public class PostingsEntry implements Comparable<PostingsEntry>, Serializable {
 	   return Double.compare( other.score, score );
     }
 
-    public String toString(){
-        return Integer.toString(this.docID) +
-                " - " + positions.toString();
-    }
     
-    /* Add the position index pos to this postingentry */
+    /** Add the position index pos to this postingentry */
     public void insertPosition(int pos){
         this.positions.add(pos);
     }
 
+
+    public String toString(){
+            return Integer.toString(this.docID) +
+                    " - " + positions.toString();
+        }
 }
 
     
