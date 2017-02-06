@@ -1,2 +1,2 @@
 #!/bin/sh
-java -cp classes:pdfbox -Xmx1g ir.SearchGUI -d davisWiki -l ir17.gif -p patterns.txt
+java -cp classes:pdfbox:web-inf/lib/gson-2.8.0.jar -Xmx3g ir.SearchGUI -d davisWiki2 -l ir17.gif -p patterns.txt
