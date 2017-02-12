@@ -163,7 +163,6 @@ public class SearchGUI extends JFrame {
 	Action search = new AbstractAction() {
 		public void actionPerformed( ActionEvent e ) {
 		    // Turn the search string and into a Query
-		    long startTime = System.nanoTime();
 		    String queryString = queryWindow.getText().toLowerCase().trim();
 		    query = new Query( queryString );
 		    // Search and print results. Access to the index is synchronized since
@@ -172,11 +171,9 @@ public class SearchGUI extends JFrame {
 		    synchronized ( indexLock ) {
 				results = indexer.index.search( query, queryType, rankingType, structureType ); 
 		    }
-		    long estimatedTime = (System.nanoTime() - startTime)/1000000;
 		    StringBuffer buf = new StringBuffer();
 		    if ( results != null ) {
-			buf.append( "\nFound " + results.size() + " matching document(s) in "
-				+estimatedTime+" milliseconds\n\n" );
+			buf.append( "\nFound " + results.size() + " matching document(s)\n\n" );
 			for ( int i=0; i<results.size(); i++ ) {
 			    buf.append( " " + i + ". " );
 			    String filename = indexer.index.docIDs.get( "" + results.get(i).docID );
@@ -349,10 +346,9 @@ public class SearchGUI extends JFrame {
 			File dokDir = new File( dirNames.get( i ));
 			indexer.processFiles( dokDir );
 	    }
-	    //indexer.index.cleanup();
-	    // Store index
-	    this.indexer.index.saveAll();
 	    indexer.index.cleanup();
+	    // Store index
+	    //this.indexer.index.saveAll();
 	    resultWindow.setText( "\n  Done!" );
 	}
     };
@@ -365,7 +361,7 @@ public class SearchGUI extends JFrame {
 	indexer = new Indexer( patterns_file );
 	synchronized ( indexLock ) {
 	    resultWindow.setText( "\n  Recovering indexes, please wait..." );
-	    indexer.index.load();
+	    indexer.index.recover();
 	    resultWindow.setText( "\n  Done!" );
 	}
     };
@@ -422,7 +418,7 @@ public class SearchGUI extends JFrame {
     }
 
     public void debugg(){
-    	System.err.println(this.indexer.index.toString());
+    	System.err.println(this.indexer.index.index.toString());
     }
     /*public void debugg(){
     	Iterator<String> it = this.indexer.index.getDictionaryInMemory();

@@ -163,7 +163,6 @@ public class SearchGUI extends JFrame {
 	Action search = new AbstractAction() {
 		public void actionPerformed( ActionEvent e ) {
 		    // Turn the search string and into a Query
-		    long startTime = System.nanoTime();
 		    String queryString = queryWindow.getText().toLowerCase().trim();
 		    query = new Query( queryString );
 		    // Search and print results. Access to the index is synchronized since
@@ -172,11 +171,9 @@ public class SearchGUI extends JFrame {
 		    synchronized ( indexLock ) {
 				results = indexer.index.search( query, queryType, rankingType, structureType ); 
 		    }
-		    long estimatedTime = (System.nanoTime() - startTime)/1000000;
 		    StringBuffer buf = new StringBuffer();
 		    if ( results != null ) {
-			buf.append( "\nFound " + results.size() + " matching document(s) in "
-				+estimatedTime+" milliseconds\n\n" );
+			buf.append( "\nFound " + results.size() + " matching document(s)\n\n" );
 			for ( int i=0; i<results.size(); i++ ) {
 			    buf.append( " " + i + ". " );
 			    String filename = indexer.index.docIDs.get( "" + results.get(i).docID );
@@ -249,9 +246,7 @@ public class SearchGUI extends JFrame {
 	Action saveAndQuit = new AbstractAction() {
 		public void actionPerformed( ActionEvent e ) {
 		    resultWindow.setText( "\n  Saving index..." );
-		    indexer.index.saveAll();
 		    indexer.index.cleanup();
-
 		    System.exit( 0 );
 		}
 	    };
@@ -349,10 +344,9 @@ public class SearchGUI extends JFrame {
 			File dokDir = new File( dirNames.get( i ));
 			indexer.processFiles( dokDir );
 	    }
-	    //indexer.index.cleanup();
+	    indexer.index.cleanup();
 	    // Store index
 	    this.indexer.index.saveAll();
-	    indexer.index.cleanup();
 	    resultWindow.setText( "\n  Done!" );
 	}
     };
@@ -365,7 +359,7 @@ public class SearchGUI extends JFrame {
 	indexer = new Indexer( patterns_file );
 	synchronized ( indexLock ) {
 	    resultWindow.setText( "\n  Recovering indexes, please wait..." );
-	    indexer.index.load();
+	    indexer.index.recover();
 	    resultWindow.setText( "\n  Done!" );
 	}
     };
@@ -421,19 +415,15 @@ public class SearchGUI extends JFrame {
 	}				    
     }
 
-    public void debugg(){
-    	System.err.println(this.indexer.index.toString());
-    }
-    /*public void debugg(){
-    	Iterator<String> it = this.indexer.index.getDictionaryInMemory();
+    public void debugg(Indexer indexer){
+    	Iterator<String> it = indexer.index.getDictionary();
 	    while(it.hasNext()){
 	    String t = it.next();
-	    PostingsList p = this.indexer.index.getPostings( t );*/
+	    PostingsList p = indexer.index.getPostings( t );
 
-        /*System.out.print(t + " || " + p.toString() + "\n");*/
-     	//}
-     	//this.indexer.index.printRecentRegister();
-    //}
+        System.out.print(t + " || " + p.toString() + "\n");
+     	}
+    }
     /* ----------------------------------------------- */
 
 
@@ -443,7 +433,7 @@ public class SearchGUI extends JFrame {
 		s.decodeArgs( args );
 		s.createGUI();
 		// Check if we have some file stored
-		File f = new File("postings/docIDs.json");
+		File f = new File("postings/t1.json");
 		if(!f.exists()){
 			// Index if we do not
 	    	s.index();
@@ -452,7 +442,6 @@ public class SearchGUI extends JFrame {
 			// Just recover data otherwise
 			s.recover();
 		}
-		//s.debugg();
 	}
 }
  

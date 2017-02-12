@@ -19,13 +19,10 @@ import com.google.gson.reflect.TypeToken;
 public class DiskHashMap{
     // Maps tokens with corresponding termIDs
     private Map<String,Integer> termsID = new HashMap<String,Integer>();
-    // Tokens mapping to PostingsList
-    private HashMap<String, PostingsList> indexInMemory = new HashMap<String, PostingsList>();
+    // termIDs mapping to PostingsList
+    private HashMap<Integer, PostingsList> indexInMemory = new HashMap<Integer, PostingsList>();
     // Used when indexing to map tokens to termIDs
     private int termID;
-    private int cashLimit = 4;//1000;
-    // Keep track of recent queries
-    // private LinkedList<String,
 
     
     /* Constructor */
@@ -49,6 +46,7 @@ public class DiskHashMap{
     public PostingsList get(String token){
         
         // Read JSON file associated to token and return it as a postingslist
+    	PostingsList p = new PostingsList();
         String filename = "postings/t"+termsID.get(token)+".json";
     	PostingsList post_tmp = new PostingsList();
         try(Reader reader = new FileReader(filename)){
@@ -83,26 +81,9 @@ public class DiskHashMap{
      */
     public void put(String token, int docID, int offset){
     	// Check if token is contained in termsID
-        if (this.termsID.containsKey(token)){
-            // Check if it corresponding PostingsList is in memory
-            //if (this.indexInMemory.containsKey(token)){
-                // Update its corresponding postingslist with new occurence
-    	    	this.indexInMemory.get(token).insert(docID, offset);
-            //}
-            /*else{
-                // Load the PostingsList
-                String filename = "postings/t"+termsID.get(token)+".json";
-                PostingsList post_tmp = new PostingsList();
-                try(Reader reader = new FileReader(filename)){
-                    post_tmp = (new Gson()).fromJson(reader, PostingsList.class);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                // Add new occurence
-                post_tmp.insert(docID, offset);
-                // Keep in memory
-                this.indexInMemory.put(token, post_tmp);
-            }*/
+       if (this.termsID.containsKey(token)){
+            // Update its corresponding postingslist with new occurence
+	    	this.indexInMemory.get(termID(token)).insert(docID, offset);
         }
         else{
         	// Add new token to termsID, with its corresponding termID
@@ -111,45 +92,18 @@ public class DiskHashMap{
             // indexInMemory.
 	    	PostingsList postingslist = new PostingsList();
 	        postingslist.insert(docID, offset);
-	        this.indexInMemory.put(token, postingslist);
-        }
-        System.err.println(token);
-        // BackUp if necessary
-        if (this.termID%this.cashLimit == 0)
-            this.backUp();
-    }
-
-
-    /** [NEW]
-     * Debugging
-     */
-    public void printRecentRegister(){
-        System.err.println("Most recent in order: ");
-        Iterator it = this.indexInMemory.keySet().iterator();
-        while(it.hasNext()){
-            System.err.println(it.next());
+	        this.indexInMemory.put(termID(token), postingslist);
         }
     }
 
     
-    public void backUp(){
-        /*for (Map.Entry<Integer, PostingsList> entry : this.indexInMemory.entrySet()) {
-            saveJSON("postings/t"+entry.getKey()+".json", entry.getValue());
-            if (entry.getKey()%1000==0)
-                System.err.println("storing "+ entry.getKey());
-        }*/
-        System.err.println("back up");
-        //saveJSON("postings/termsID.json", this.termsID);
-    }
-
-
     /** [NEW]
      *  Saves termsID (token-termID map) + all postingslists
      */
     public void saveAll(){
-        for (Map.Entry<String, PostingsList> entry : this.indexInMemory.entrySet()) {
-            saveJSON("postings/t"+termsID.get(entry.getKey())+".json", entry.getValue());
-            if (termsID.get(entry.getKey())%1000==0)
+        for (Map.Entry<Integer, PostingsList> entry : this.indexInMemory.entrySet()) {
+            saveJSON("postings/t"+entry.getKey()+".json", entry.getValue());
+            if (entry.getKey()%1000==0)
                 System.err.println("storing "+ entry.getKey());
         }
         saveJSON("postings/termsID.json", this.termsID);
@@ -183,6 +137,10 @@ public class DiskHashMap{
     }
 
 
+    public static String hash(String token){
+            return Integer.toString( token.hashCode() );
+    }
+        
     /* Returns the keys from the index, i.e. the terms*/
     public Set<String> keySet(){
     	return this.termsID.keySet();

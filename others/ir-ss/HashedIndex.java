@@ -11,7 +11,6 @@
 package ir;
 
 import java.util.*;
-import java.lang.*;
 import java.io.*;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -21,12 +20,12 @@ import com.google.gson.reflect.TypeToken;
  */
 public class HashedIndex implements Index {
 
-    private Map<String, PostingsList> index 
-            = new TreeMap<String, PostingsList>();
+    public MyMap index = new MyMap(100000);
     /* [MODIFIED] Maps indices to document names */
     public Map<String, String> docIDs = new HashMap<String,String>();
-    public Map<String,Integer> docLengths = new HashMap<String,Integer>();
     int count;// Used when indexing to map tokens to termIDs
+    // Keep track of recent queries
+    // private LinkedList<String,
 
 
     /** Constructor */
@@ -34,47 +33,22 @@ public class HashedIndex implements Index {
         this.count = 0;
     }
 
-// INDEXING MANAGEMENT --------------------------------------------------
+    // INDEXING MANAGEMENT --------------------------------------------------
 
     /** [MODIFIED]
      *  Inserts new information provided by new occurence of token 
      *  in docID at offset.
      */
     public void insert( String token, int docID, int offset ) {
-        if (this.index.containsKey(token)){
-            //System.err.println(token+" already in memory");
-            this.index.get(token).insert(docID, offset);
-        }
-        else{
-            //System.err.println("new token: " +token+" stored");
-            PostingsList postingslist = new PostingsList();
-            postingslist.insert(docID, offset);
-            this.index.put(token, postingslist);
-        }
+        //System.err.println("hashed: "+token);
+        //System.err.println(docID);
+        this.index.put(token, docID, offset);
+        // System.err.println(docID);
+        //System.err.println(count++);
     }
 
 
-// SEARCH MANAGEMENT (USER) ---------------------------------------------
-
-
-    /** [MODIFIED]
-     *  Returns the postings for a specific term, or null
-     *  if the term is not in the index.
-     */
-    public PostingsList getPostings( String token ) {
-        System.err.println("start search...");
-        // Read JSON file associated to token and return it as a postingslist
-        String filename = "postings/t"+hash(token)+".json";
-        PostingsList post = new PostingsList();
-        try(Reader reader = new FileReader(filename)){
-            post = (new Gson()).fromJson(reader, PostingsList.class);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return post;
-    }
-
-// DISK/MEMORY MANAGEMENT -----------------------------------------------
+    // MEMORY MANAGEMENT --------------------------------------------------
 
 
     /** [NEW]
@@ -82,18 +56,12 @@ public class HashedIndex implements Index {
      * This includes hashmap mapping tokens with respective terms and list of 
      * names of the retrieved documents.
      */
-    public void load(){
+    public void recover(){
         // Recover docIDs
+        // System.err.println("he");
         try(Reader reader = new FileReader("postings/docIDs.json")){
             this.docIDs = (new Gson()).fromJson(reader, 
             new TypeToken<Map<String, String>>(){}.getType());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        try(Reader reader = new FileReader("postings/docLengths.json")){
-            this.docLengths = (new Gson()).fromJson(reader, 
-            new TypeToken<Map<String, Integer>>(){}.getType());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -104,24 +72,18 @@ public class HashedIndex implements Index {
      *  Saves the token-termIDs map and list with document names
      */
     public void saveAll(){
-        // Store postings 
-        for (Map.Entry<String, PostingsList> entry : this.index.entrySet()) {
-            saveJSON("postings/t"+hash(entry.getKey())+".json", entry.getValue());
-            count++;
-            if (count%1000==0)
-                System.err.println("storing "+ count);
-        }
-        // Store mapping ID<->document names mapping
+        this.index.saveToDisk();
+        //this.index.saveFromMemory();
+        // Store mapping ID<->document names
         this.saveJSON("postings/docIDs.json", this.docIDs);
-        this.saveJSON("postings/docLengths.json", this.docLengths);
     }  
 
 
     /** [NEW]
-     * Saves object "o" as a JSON file called fileName 
+     * Saves object o as a JSON file called fileName 
      */
     public void saveJSON(String fileName, Object o){
-        // System.err.println("accessing disk");
+        System.err.println("accessing disk");
         Gson gson = new Gson();
         try(FileWriter writer = new FileWriter(fileName)){
             gson.toJson(o, writer);
@@ -132,16 +94,18 @@ public class HashedIndex implements Index {
     }
 
 
-    /**
-     *  No need for cleanup in a HashedIndex.
-     */
-    public void cleanup() {
-        this.index = new TreeMap<String, PostingsList>();
-        this.count = 0;
-    }
-
+    // ------------------------------------------------------------------------
     
-// QUERIES MANAGEMENT --------------------------------------------------
+    /** [MODIFIED]
+     *  Returns all the words in the index.
+     */
+    /*public Iterator<String> getDictionaryInMemory() {
+        //return this.index.keySet().iterator();
+        return this.index.keySet().iterator();
+    }    */
+
+
+    // QUERIES MANAGEMENT --------------------------------------------------
 
     /**
      *  Searches the index for postings matching the query.
@@ -153,7 +117,8 @@ public class HashedIndex implements Index {
                 case Index.INTERSECTION_QUERY: return intersect(query);
                 case Index.PHRASE_QUERY: return phrase_query(query);
                 case Index.RANKED_QUERY:
-                    return ranked_query(query);
+                    System.out.println("ranked query - not yet implemented");
+                    return null;
                 default: 
                     System.out.println("not valid query");
                     return null;
@@ -165,51 +130,16 @@ public class HashedIndex implements Index {
     }
 
 
-    public PostingsList ranked_query(Query query){
-        
-        // List with postings corresponding to the queries
-        LinkedList<PostingsList> listQueriedPostings = new LinkedList<PostingsList>();
-        for (int i = 0; i<query.size(); i++){
-            // If any query has zero matches, return 0 results
-            if(!(new File("postings/t"+hash(query.terms.get(i))+".json")).exists()){
-                //if (!this.index.containsKey(query.terms.get(i)))
-                return null;}
-            // Otherwise store postings in the list
-            listQueriedPostings.add(this.getPostings(query.terms.get(i)));
-        }
-
-        PostingsList result = listQueriedPostings.get(0);
-        //System.err.println("result: "+ result.toString());
-        double df = result.size();
-        double N = 0;
-        double idf = 0;
-        double tf = 0;
-
-        Iterator<PostingsEntry> it = result.iterator();
-        PostingsEntry pi = new PostingsEntry();
-        while (it.hasNext()){
-            pi = it.next();
-            tf = pi.positions.size();
-            N = this.docLengths.get(""+pi.docID);
-            idf = Math.log(N/df);
-            pi.setScore(tf*idf/N);
-        }
-
-        result.sort();
-        // In case only one word is queried
-        /*if (listQueriedPostings.size() == 1){
-            return result;
-        }
-
-        // Apply algorithm as many times as words in the query
-        for(int i = 1; i < listQueriedPostings.size(); i++){
-            result = phrase_query(result, listQueriedPostings.get(i));
-            if (result.isEmpty()){
-                return null;
-            }
-        }*/
-        return result;
+    /** [MODIFIED]
+     *  Returns the postings for a specific term, or null
+     *  if the term is not in the index.
+     */
+    public PostingsList getPostings( String token ) {
+        System.err.println("start search...");
+        return this.index.get(token);
+        // Store it in PostingsList format
     }
+
 
     /** [NEW] 
      * Finds documents containing the query as a phrase 
@@ -221,8 +151,7 @@ public class HashedIndex implements Index {
         LinkedList<PostingsList> listQueriedPostings = new LinkedList<PostingsList>();
         for (int i = 0; i<query.size(); i++){
             // If any query has zero matches, return 0 results
-            if(!(new File("postings/t"+hash(query.terms.get(i))+".json")).exists())
-                //if (!this.index.containsKey(query.terms.get(i)))
+            if (!this.index.containsKey(query.terms.get(i)))
                 return null;
             // Otherwise store postings in the list
             listQueriedPostings.add(this.getPostings(query.terms.get(i)));
@@ -369,7 +298,7 @@ public class HashedIndex implements Index {
         LinkedList<PostingsList> listQueriedPostings = new LinkedList<PostingsList>();
         for (int i = 0; i<query.size(); i++){
             // If any query has zero matches, return 0 results
-            if (!(new File("postings/t"+hash(query.terms.get(i))+".json")).exists()){
+            if (!this.index.containsKey(query.terms.get(i))){
                 System.err.println("null");
                 return null;
             }
@@ -473,33 +402,16 @@ public class HashedIndex implements Index {
     }
 
 
-// OTHERS --------------------------------------------------------------
-    
-    /** [MODIFIED]
-     *  Returns all the words in the index.
+    /**
+     *  No need for cleanup in a HashedIndex.
      */
-    public Set<String> keySet() {
-        return this.index.keySet();
-    }  
+    public void cleanup() {}
 
 
     /** [NEW]
-     *  Hashes the string to unique int representation
+     *  Debugging, checking if recent ordering with linkedhashmap works
      */
-    public static String hash(String token){
-        return Integer.toString( token.hashCode() );
-    } 
-
-
-    /** [NEW]
-     *  Strings the map containing all postingslist and tokens
-     */
-    public String toString(){
-        String s = " ";
-        for (Map.Entry<String, PostingsList> entry : this.index.entrySet()) {
-            s += entry.getKey()+" - " + entry.getValue().toString() + "\n";
-        }
-        return s;//this.indexInMemory.toString();
-    } 
-
+    public void printRecentRegister(){
+        //this.indexDisk.printRecentRegister();
+    }
 }

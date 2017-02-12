@@ -33,17 +33,13 @@ public interface Index {
     public static final int BIGRAM = 1; 
     public static final int SUBPHRASE = 2; 
 	
+    public HashMap<String,Integer> docLengths = new HashMap<String,Integer>();
 
-    //  INDEX/SEARCH
+    //  !public void saveAll();
+    public void recover();
     public void insert( String token, int docID, int offset );
-    public PostingsList getPostings( String token );
-    // MEMORY/DISK
-    public void load();
-    public void saveAll();
-    public void saveJSON(String fileName, Object o);
-    
     //public Iterator<String> getDictionaryInMemory();
-    // SEARCH
+    public PostingsList getPostings( String token );
     public PostingsList search( Query query, int queryType, int rankingType, int structureType );
     public void cleanup();
 

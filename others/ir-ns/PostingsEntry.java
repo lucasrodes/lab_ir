@@ -9,7 +9,7 @@
 package ir;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.LinkedList;
 
 public class PostingsEntry implements Comparable<PostingsEntry>, Serializable {
     
@@ -17,10 +17,8 @@ public class PostingsEntry implements Comparable<PostingsEntry>, Serializable {
     public LinkedList<Integer> positions = new LinkedList<Integer>();
     public double score;
 
-    /** Constructors */
-    public PostingsEntry( ){
-    }
 
+    /** Constructors */
     public PostingsEntry( int dI, double sc){
         this.docID = dI;
         this.score = sc;
@@ -31,7 +29,6 @@ public class PostingsEntry implements Comparable<PostingsEntry>, Serializable {
         this.score = sc;
         this.positions.add(pos);
     }
-
     /**
      *  PostingsEntries are compared by their score (only relevant 
      *  in ranked retrieval).
@@ -40,15 +37,10 @@ public class PostingsEntry implements Comparable<PostingsEntry>, Serializable {
      *  descending order.
      */
     public int compareTo( PostingsEntry other ) {
-       return Double.compare( other.score, score );
+	   return Double.compare( other.score, score );
     }
 
-
-    public void setScore(double sc){
-        this.score = sc;
-    }
     
-
     /** Add the position index pos to this postingentry */
     public void insertPosition(int pos){
         this.positions.add(pos);
@@ -56,9 +48,9 @@ public class PostingsEntry implements Comparable<PostingsEntry>, Serializable {
 
 
     public String toString(){
-            return Integer.toString(this.docID) +
-                    " - " + positions.toString();
-        }
+        return Integer.toString(this.docID) +
+                " - " + positions.toString();
+    }
 }
 
     

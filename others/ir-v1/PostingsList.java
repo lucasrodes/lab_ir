@@ -8,7 +8,7 @@
 
 package ir;
 
-import java.util.*;
+import java.util.LinkedList;
 import java.io.Serializable;
 
 /**
@@ -21,14 +21,12 @@ public class PostingsList implements Serializable {
 
     public PostingsList(){}
 
-
     /**  Number of postings in this list  */
     public int size() {
-	   return list.size();
+	return list.size();
     }
 
-
-    /** Checks if the list of postings is empty */
+    /* Checks if the list of postings is empty */
     public boolean isEmpty(){
         if (size()==0) {
             return true;
@@ -36,53 +34,33 @@ public class PostingsList implements Serializable {
         return false;
     }
 
-
-    /**  i-th posting */
+    /**  Returns the ith posting */
     public PostingsEntry get( int i ) {
-	   return list.get( i );
+	return list.get( i );
     }
 
-
-    /** Last docID in postingslist **/
+    /** Get last docID in postingslist **/
     public PostingsEntry getLast(){
         return this.list.getLast();
     }
 
 
-
-    /** [NEW]
-     *  Add new posting Corresponding to docID 
-     */
+    /* Add new posting */
+    /* Corresponding to docID */
     public void insert(int docID){
         this.list.add(new PostingsEntry(docID, 0));
     }
 
-
-    /** [NEW]
-     *  Corresponding to docID and its corresponding positional index pos 
-     */
+    /* Corresponding to docID and its corresponding positional index pos */
     public void insert(int docID, int pos){
-        /* Check if the list of postings is empty or there is no entry
-           for docID in the list. Add new postingsentry with (docID, pos). */
+        // Check if the list of postings is empty or there is no entry
+        // for docID in the list. Add new postingsentry with (docID, pos).
         if (this.isEmpty()||this.getLast().docID != docID)
             this.list.add(new PostingsEntry(docID, 0, pos));
         else
             this.getLast().insertPosition(pos);
     }
 
-
-    public Iterator<PostingsEntry> iterator(){
-        return this.list.iterator();
-    }
-
-
-    public void sort(){
-        Collections.sort(list);
-    }
-    
-    /** [NEW]
-     *  
-     */
     public String toString(){
 
         String s = "";

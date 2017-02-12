@@ -8,7 +8,7 @@
 
 package ir;
 
-import java.util.*;
+import java.util.LinkedList;
 import java.io.Serializable;
 
 /**
@@ -71,15 +71,6 @@ public class PostingsList implements Serializable {
     }
 
 
-    public Iterator<PostingsEntry> iterator(){
-        return this.list.iterator();
-    }
-
-
-    public void sort(){
-        Collections.sort(list);
-    }
-    
     /** [NEW]
      *  
      */
