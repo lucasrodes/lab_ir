@@ -161,7 +161,6 @@ public class HashedIndex implements Index {
                 if (!this.index.containsKey(query.terms.get(i))){
                     return null;}
                 // Otherwise store postings in the list
-                System.err.println(this.getPostings(query.terms.get(i)));
                 l.add(this.getPostings(query.terms.get(i)));
             }
             
@@ -194,9 +193,10 @@ public class HashedIndex implements Index {
 
         //System.err.println("result: "+ result.toString());
         double df = result.size();
-        double N = 0;
+        double N = this.docIDs.size();
         double idf = 0;
         double tf = 0;
+        double l = 0;
 
         /*PostingsEntry pi = new PostingsEntry();
         for(int i = 0; i<result.size(); i++){
@@ -211,9 +211,9 @@ public class HashedIndex implements Index {
         while (it.hasNext()){
             pi = it.next();
             tf = pi.positions.size();
-            N = this.docLengths.get(""+pi.docID);
+            l = this.docLengths.get(""+pi.docID);
             idf = Math.log(N/df);
-            pi.setScore(tf*idf/N);
+            pi.setScore(tf*idf/l);
         }
 
         result.sort();
