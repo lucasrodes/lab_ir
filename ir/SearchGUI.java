@@ -351,8 +351,8 @@ public class SearchGUI extends JFrame {
 	    }
 	    //indexer.index.cleanup();
 	    // Store index
-	    this.indexer.index.saveAll();
-	    indexer.index.cleanup();
+	    //this.indexer.index.saveAll();
+	    //indexer.index.cleanup();
 	    resultWindow.setText( "\n  Done!" );
 	}
     };

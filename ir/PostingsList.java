@@ -14,7 +14,7 @@ import java.io.Serializable;
 /**
  *   A list of postings for a given word.
  */
-public class PostingsList implements Serializable {
+public class PostingsList implements Serializable, Cloneable {
     
     /** The postings list as a linked list. */
     private LinkedList<PostingsEntry> list = new LinkedList<PostingsEntry>();
@@ -90,6 +90,21 @@ public class PostingsList implements Serializable {
             s += p.toString() +",";
         }
         return s;
+    }
+
+    public void remove(){
+        this.list.remove(0);
+    }
+
+
+    protected PostingsList clone(){
+        try{
+            final PostingsList p =  (PostingsList)super.clone();
+            p.list = (LinkedList<PostingsEntry>) this.list.clone();
+            return p;
+        }
+        catch (CloneNotSupportedException e) {}
+        return null;
     }
 }
 	

@@ -54,26 +54,6 @@ public class HashedIndex implements Index {
     }
 
 
-// SEARCH MANAGEMENT (USER) ---------------------------------------------
-
-
-    /** [MODIFIED]
-     *  Returns the postings for a specific term, or null
-     *  if the term is not in the index.
-     */
-    public PostingsList getPostings( String token ) {
-        System.err.println("start search...");
-        // Read JSON file associated to token and return it as a postingslist
-        String filename = "postings/t"+hash(token)+".json";
-        PostingsList post = new PostingsList();
-        try(Reader reader = new FileReader(filename)){
-            post = (new Gson()).fromJson(reader, PostingsList.class);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return post;
-    }
-
 // DISK/MEMORY MANAGEMENT -----------------------------------------------
 
 
@@ -107,6 +87,7 @@ public class HashedIndex implements Index {
         // Store postings 
         for (Map.Entry<String, PostingsList> entry : this.index.entrySet()) {
             saveJSON("postings/t"+hash(entry.getKey())+".json", entry.getValue());
+            System.err.println("postings/t"+hash(entry.getKey())+".json");
             count++;
             if (count%1000==0)
                 System.err.println("storing "+ count);
@@ -140,7 +121,29 @@ public class HashedIndex implements Index {
         this.count = 0;
     }
 
-    
+  
+// SEARCH MANAGEMENT (USER) ---------------------------------------------
+
+
+    /** [MODIFIED]
+     *  Returns the postings for a specific term, or null
+     *  if the term is not in the index.
+     */
+    public PostingsList getPostings( String token ) {
+        PostingsList post = (this.index.get(token)).clone();
+        /*System.err.println("start search...");
+        // Read JSON file associated to token and return it as a postingslist
+        String filename = "postings/t"+hash(token)+".json";
+        PostingsList post = new PostingsList();
+        try(Reader reader = new FileReader(filename)){
+            post = (new Gson()).fromJson(reader, PostingsList.class);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }*/
+        return post;
+    }
+
+
 // QUERIES MANAGEMENT --------------------------------------------------
 
     /**
@@ -148,12 +151,32 @@ public class HashedIndex implements Index {
      */
     public PostingsList search( Query query, int queryType, int rankingType, 
         int structureType ) {
-        if (query.size()>0){
+
+        LinkedList<PostingsList> l = new LinkedList<PostingsList>();
+        if (query.size()>0){ 
+            // List with postings corresponding to the queries
+            for (int i = 0; i<query.size(); i++){
+                // If any query has zero matches, return 0 results
+                //if(!(new File("postings/t"+hash(query.terms.get(i))+".json")).exists()){
+                if (!this.index.containsKey(query.terms.get(i))){
+                    return null;}
+                // Otherwise store postings in the list
+                System.err.println(this.getPostings(query.terms.get(i)));
+                l.add(this.getPostings(query.terms.get(i)));
+            }
+            
+            PostingsList result = new PostingsList();
+
             switch (queryType){
-                case Index.INTERSECTION_QUERY: return intersect(query);
-                case Index.PHRASE_QUERY: return phrase_query(query);
+                case Index.INTERSECTION_QUERY: 
+                    System.err.println("Intersection query");
+                    return intersect(l);
+                case Index.PHRASE_QUERY: 
+                    System.err.println("Phrase query");
+                    return  phrase_query(l);
                 case Index.RANKED_QUERY:
-                    return ranked_query(query);
+                    System.err.println("Ranked query");
+                    return ranked_query(l);
                 default: 
                     System.out.println("not valid query");
                     return null;
@@ -165,26 +188,24 @@ public class HashedIndex implements Index {
     }
 
 
-    public PostingsList ranked_query(Query query){
+    public PostingsList ranked_query(LinkedList<PostingsList> listQueriedPostings){        
         
-        // List with postings corresponding to the queries
-        LinkedList<PostingsList> listQueriedPostings = new LinkedList<PostingsList>();
-        for (int i = 0; i<query.size(); i++){
-            // If any query has zero matches, return 0 results
-            if(!(new File("postings/t"+hash(query.terms.get(i))+".json")).exists()){
-                //if (!this.index.containsKey(query.terms.get(i)))
-                return null;}
-            // Otherwise store postings in the list
-            listQueriedPostings.add(this.getPostings(query.terms.get(i)));
-        }
-
         PostingsList result = listQueriedPostings.get(0);
+
         //System.err.println("result: "+ result.toString());
         double df = result.size();
         double N = 0;
         double idf = 0;
         double tf = 0;
 
+        /*PostingsEntry pi = new PostingsEntry();
+        for(int i = 0; i<result.size(); i++){
+            pi = result.get(i);
+            tf = pi.positions.size();
+            N = this.docLengths.get(""+pi.docID);
+            idf = Math.log(N/df);
+            pi.setScore(tf*idf/N);
+        }*/
         Iterator<PostingsEntry> it = result.iterator();
         PostingsEntry pi = new PostingsEntry();
         while (it.hasNext()){
@@ -215,20 +236,10 @@ public class HashedIndex implements Index {
      * Finds documents containing the query as a phrase 
      * TODO: Skip pointer
      */
-    public PostingsList phrase_query(Query query){
+    public PostingsList phrase_query(LinkedList<PostingsList> listQueriedPostings){
         
-        // List with postings corresponding to the queries
-        LinkedList<PostingsList> listQueriedPostings = new LinkedList<PostingsList>();
-        for (int i = 0; i<query.size(); i++){
-            // If any query has zero matches, return 0 results
-            if(!(new File("postings/t"+hash(query.terms.get(i))+".json")).exists())
-                //if (!this.index.containsKey(query.terms.get(i)))
-                return null;
-            // Otherwise store postings in the list
-            listQueriedPostings.add(this.getPostings(query.terms.get(i)));
-        }
-
-        PostingsList result = listQueriedPostings.get(0);
+        PostingsList result = new PostingsList();
+        result = listQueriedPostings.get(0);
 
         // In case only one word is queried
         if (listQueriedPostings.size() == 1){
@@ -364,25 +375,13 @@ public class HashedIndex implements Index {
      *  Intersects a set of queries *
      *  TODO: Skip pointer
      */
-    public PostingsList intersect(Query query){
-        // List with postings corresponding to the queries
-        LinkedList<PostingsList> listQueriedPostings = new LinkedList<PostingsList>();
-        for (int i = 0; i<query.size(); i++){
-            // If any query has zero matches, return 0 results
-            if (!(new File("postings/t"+hash(query.terms.get(i))+".json")).exists()){
-                System.err.println("null");
-                return null;
-            }
-            // Otherwise store postings in the list
-            listQueriedPostings.add(this.getPostings(query.terms.get(i)));
-        }
+    public PostingsList intersect(LinkedList<PostingsList> listQueriedPostings){
 
         // Order the posting list by increasing document frequency
         listQueriedPostings = sortByIncreasingFrequency(listQueriedPostings); 
 
-
-        PostingsList result = listQueriedPostings.get(0);
-        
+        PostingsList result = (PostingsList)listQueriedPostings.get(0);
+   
         // In case only one word is queried
         if (listQueriedPostings.size() == 1){
             return result;
