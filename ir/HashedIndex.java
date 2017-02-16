@@ -130,7 +130,9 @@ public class HashedIndex implements Index {
      *  if the term is not in the index.
      */
     public PostingsList getPostings( String token ) {
-        PostingsList post = (this.index.get(token)).clone();
+        PostingsList post = new PostingsList();
+        if(this.index.containsKey(token))
+            post = (this.index.get(token)).clone();
         /*System.err.println("start search...");
         // Read JSON file associated to token and return it as a postingslist
         String filename = "postings/t"+hash(token)+".json";
@@ -152,30 +154,17 @@ public class HashedIndex implements Index {
     public PostingsList search( Query query, int queryType, int rankingType, 
         int structureType ) {
 
-        LinkedList<PostingsList> l = new LinkedList<PostingsList>();
         if (query.size()>0){ 
-            // List with postings corresponding to the queries
-            for (int i = 0; i<query.size(); i++){
-                // If any query has zero matches, return 0 results
-                //if(!(new File("postings/t"+hash(query.terms.get(i))+".json")).exists()){
-                if (!this.index.containsKey(query.terms.get(i))){
-                    return null;}
-                // Otherwise store postings in the list
-                l.add(this.getPostings(query.terms.get(i)));
-            }
-            
-            PostingsList result = new PostingsList();
-
             switch (queryType){
                 case Index.INTERSECTION_QUERY: 
                     System.err.println("Intersection query");
-                    return intersect(l);
+                    return intersect(query);
                 case Index.PHRASE_QUERY: 
                     System.err.println("Phrase query");
-                    return  phrase_query(l);
+                    return  phrase_query(query);
                 case Index.RANKED_QUERY:
                     System.err.println("Ranked query");
-                    return ranked_query(l);
+                    return ranked_query(query);
                 default: 
                     System.out.println("not valid query");
                     return null;
@@ -187,56 +176,124 @@ public class HashedIndex implements Index {
     }
 
 
-    public PostingsList ranked_query(LinkedList<PostingsList> listQueriedPostings){        
+    public PostingsList ranked_query(Query query){        
         
-        PostingsList result = listQueriedPostings.get(0);
+        /*PostingsList p = union_query(query);
+        PostingsList pp = new PostingsList();
 
-        //System.err.println("result: "+ result.toString());
+        for (int i = 0; i < query.size(); i++){
+            pp = this.getPostings(query.terms.get(i));
+
+        }*/
+        
         double df = result.size();
         double N = this.docIDs.size();
         double idf = 0;
         double tf = 0;
         double l = 0;
 
-        /*PostingsEntry pi = new PostingsEntry();
-        for(int i = 0; i<result.size(); i++){
-            pi = result.get(i);
-            tf = pi.positions.size();
-            N = this.docLengths.get(""+pi.docID);
-            idf = Math.log(N/df);
-            pi.setScore(tf*idf/N);
-        }*/
-        Iterator<PostingsEntry> it = result.iterator();
-        PostingsEntry pi = new PostingsEntry();
-        while (it.hasNext()){
-            pi = it.next();
-            tf = pi.positions.size();
-            l = this.docLengths.get(""+pi.docID);
-            idf = Math.log(N/df);
-            pi.setScore(tf*idf/l);
+        // Create list with postingslists of the terms in the query
+        LinkedList<PostingsList> listQueriedPostings = new LinkedList<PostingsList>();
+        for (int i = 0; i<query.size(); i++){
+            // If any query has zero matches, return 0 results
+            //if(!(new File("postings/t"+hash(query.terms.get(i))+".json")).exists()){
+            // Otherwise store postings in the list
+            Iterator<PostingsEntry> it2 = this.getPostings(query.terms.get(i)).iterator();
+            PostringsEntry pP = new PostingsEntry();
+            while (it2.hasNext()){
+                pP = it2.next();
+                // Compute the score(query, document)
+                tf = pe.positions.size();
+                l = this.docLengths.
+            }
+
+            listQueriedPostings.add(this.getPostings(query.terms.get(i)));
+        }
+        
+        
+        double df = result.size();
+        double N = this.docIDs.size();
+        double idf = 0;
+        double tf = 0;
+        double l = 0;
+        
+         
+        Iterator<PostingsList> it1 = listQueriedPostings.iterator();
+        while(it1.hasNext()){
+            pl = it.next();
+            Iterator<PostingsEntry> it2 = pl.iterator();
+            PostingsEntry pe = new PostingsEntry();
+            while(it2.hastNext()){
+                pe = it2.next();
+                tf = pe.positions.size();
+                l = this.docLengths.get(""+pe.docID);
+                idf = Math.log(N/df);
+                pe.setScore(tf*idf/l);
+            }
         }
 
         result.sort();
-        // In case only one word is queried
-        /*if (listQueriedPostings.size() == 1){
-            return result;
+        return result;
+    }
+
+
+    public PostingsList union_query(Query query){
+        
+        PostingsList result = new PostingsList();//this.getPostings(query.terms.get(0));
+        
+        for (int i = 0; i<query.size(); i++){
+            if (!this.getPostings(query.terms.get(i)).isEmpty()){
+                result = union_query(result, this.getPostings(query.terms.get(i)));
+            }
+        }   
+        
+        return result;
+    }
+
+
+    public PostingsList union_query(PostingsList l1, PostingsList l2){
+        
+        Set<Integer> docs = new HashSet<Integer>();   
+        PostingsList union = new PostingsList();
+
+        Iterator<PostingsEntry> it = l1.iterator();
+        PostingsEntry p = new PostingsEntry();
+        while(it.hasNext()){
+            p = it.next();
+            union.insert(p.docID, 0);
+            docs.add(p.docID);
         }
 
-        // Apply algorithm as many times as words in the query
-        for(int i = 1; i < listQueriedPostings.size(); i++){
-            result = phrase_query(result, listQueriedPostings.get(i));
-            if (result.isEmpty()){
-                return null;
+        it = l2.iterator();
+        p = new PostingsEntry();        
+        while(it.hasNext()){
+            p = it.next();    
+            if(!docs.contains(p.docID)){
+                union.insert(p.docID,0);
+                docs.add(p.docID);
             }
-        }*/
-        return result;
+        }
+
+        return union;
     }
 
     /** [NEW] 
      * Finds documents containing the query as a phrase 
      * TODO: Skip pointer
      */
-    public PostingsList phrase_query(LinkedList<PostingsList> listQueriedPostings){
+    public PostingsList phrase_query(Query query){
+        
+        LinkedList<PostingsList> listQueriedPostings = new LinkedList<PostingsList>();
+        // List with postings corresponding to the queries
+        for (int i = 0; i<query.size(); i++){
+            // If any query has zero matches, return 0 results
+            //if(!(new File("postings/t"+hash(query.terms.get(i))+".json")).exists()){
+            if (!this.index.containsKey(query.terms.get(i))){ 
+                return null;
+            }
+            // Otherwise store postings in the list
+            listQueriedPostings.add(this.getPostings(query.terms.get(i)));
+        }
         
         PostingsList result = new PostingsList();
         result = listQueriedPostings.get(0);
@@ -375,7 +432,19 @@ public class HashedIndex implements Index {
      *  Intersects a set of queries *
      *  TODO: Skip pointer
      */
-    public PostingsList intersect(LinkedList<PostingsList> listQueriedPostings){
+    public PostingsList intersect(Query query){
+
+        LinkedList<PostingsList> listQueriedPostings = new LinkedList<PostingsList>();
+        // List with postings corresponding to the queries
+        for (int i = 0; i<query.size(); i++){
+            // If any query has zero matches, return 0 results
+            //if(!(new File("postings/t"+hash(query.terms.get(i))+".json")).exists()){
+            if (!this.index.containsKey(query.terms.get(i))){ 
+                return null;
+            }
+            // Otherwise store postings in the list
+            listQueriedPostings.add(this.getPostings(query.terms.get(i)));
+        }
 
         // Order the posting list by increasing document frequency
         listQueriedPostings = sortByIncreasingFrequency(listQueriedPostings); 
@@ -450,6 +519,8 @@ public class HashedIndex implements Index {
 
         return intersection;
     }
+
+
 
 
     /** [NEW]

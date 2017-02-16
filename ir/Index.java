@@ -41,7 +41,7 @@ public interface Index {
     public void load();
     public void saveAll();
     public void saveJSON(String fileName, Object o);
-    
+      
     //public Iterator<String> getDictionaryInMemory();
     // SEARCH
     public PostingsList search( Query query, int queryType, int rankingType, int structureType );

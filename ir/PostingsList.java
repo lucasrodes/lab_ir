@@ -106,6 +106,8 @@ public class PostingsList implements Serializable, Cloneable {
         catch (CloneNotSupportedException e) {}
         return null;
     }
+
+
 }
 	
 
