@@ -25,9 +25,13 @@ public class HashedIndex implements Index {
             = new TreeMap<String, PostingsList>();
     /* [MODIFIED] Maps indices to document names */
     public Map<String, String> docIDs = new HashMap<String,String>();
+    /* Maps name of document to its length (number of words) */
     public Map<String,Integer> docLengths = new HashMap<String,Integer>();
     int count;// Used when indexing to map tokens to termIDs
-
+    /* Maps name of document to its norm (norm of tf-idf vector of the document) */
+    //public Map<String,Integer> docNorms = new HashMap<String,Integer>();
+    /* Stores number of appearences of a word in a document */
+    //public Map<String,Integer> docNorms = new HashMap<String,Integer>();
 
     /** Constructor */
     public HashedIndex(){
@@ -178,64 +182,77 @@ public class HashedIndex implements Index {
 
     public PostingsList ranked_query(Query query){        
         
-        /*PostingsList p = union_query(query);
-        PostingsList pp = new PostingsList();
+        PostingsList result = new PostingsList();
+        PostingsList postList = new PostingsList();
+        PostingsEntry postEnt = new PostingsEntry();
+        Map<String, Double> queryRecord = new HashMap<String, Double>();
+        String q;
+        
+        double nDocs = this.docIDs.size();
+        double termFrequency_query, documentFrequency_query, w_query;
+        double termFrequency_doc, documentFrequency_doc, w_doc;
 
-        for (int i = 0; i < query.size(); i++){
-            pp = this.getPostings(query.terms.get(i));
+        // Obtain number of occurrences of each term in the query
+        Iterator<String> it_q = query.terms.iterator();
+        while(it_q.hasNext()){
+            q = it_q.next();
+            if (!queryRecord.containsKey(q))
+                queryRecord.put(q, new Double(1));
+        }
 
+        // Iterate over each query
+        it_q = query.terms.iterator();
+        while(it_q.hasNext()){
+            q = it_q.next();
+            postList = getPostings(q);
+            //System.err.println("count: " + queryRecord.get(query.terms.get(i)));
+            //System.err.println("size: " + query.size());
+            
+            termFrequency_query = queryRecord.get(q)/(new Double(query.size()));
+            //termFrequency_query = 1+ Math.log(termFrequency_query);
+            documentFrequency_query = Math.log(nDocs/postList.size());
+            w_query = termFrequency_query*documentFrequency_query;
+            // Ignote terms in query not appearing in collection
+            /*if (Double.isInfinite(idf)){
+                idf = 0;
+            }*/
+
+            /*System.err.println(query.terms.get(i));
+            System.err.println("\t tf_q: " +tf_q);
+            System.err.println("\t idf: " +idf);
+            System.err.println("\t tf*idf: " +tf_q*idf);*/
+
+            // Iterate over each document
+            documentFrequency_doc = Math.log(nDocs/postList.size());
+            Iterator<PostingsEntry> it_d = postList.iterator();
+            while(it_d.hasNext()){
+                postEnt = it_d.next();
+                termFrequency_doc = postEnt.positions.size()/
+                    (new Double(this.docLengths.get(""+postEnt.docID)));
+                //termFrequency_doc = 1+ Math.log(termFrequency_doc);
+                w_doc =documentFrequency_doc*termFrequency_doc;
+                /*System.err.println("\n D" + postEnt.docID);
+                System.err.println("\t idf = " + idf);
+                System.err.println("\t tf_d = " + tf_d);
+                System.err.println("\t tf-idf = " + tf_d*idf);
+                System.err.println("\n\t score = " + tf_q*idf*tf_d*idf);
+                System.err.println("\t norm_d = " + (tf_d*idf)*(tf_d*idf));*/
+                result.insert(postEnt.docID, w_query*w_doc);
+            }
+        }
+
+        // TODO: Normalize the score of document d with the norm of the vector containing
+        // the tf-idf values of all the terms in document d.
+
+        /*Iterator<PostingsEntry> it = result.iterator();
+        while(it.hasNext()){
+            postEnt = it.next();
+            postEnt.score /= (new Double(this.docLengths.get(""+postEnt.docID)));//(Math.sqrt(postEnt.norm2));
         }*/
         
-        double df = result.size();
-        double N = this.docIDs.size();
-        double idf = 0;
-        double tf = 0;
-        double l = 0;
-
-        // Create list with postingslists of the terms in the query
-        LinkedList<PostingsList> listQueriedPostings = new LinkedList<PostingsList>();
-        for (int i = 0; i<query.size(); i++){
-            // If any query has zero matches, return 0 results
-            //if(!(new File("postings/t"+hash(query.terms.get(i))+".json")).exists()){
-            // Otherwise store postings in the list
-            Iterator<PostingsEntry> it2 = this.getPostings(query.terms.get(i)).iterator();
-            PostringsEntry pP = new PostingsEntry();
-            while (it2.hasNext()){
-                pP = it2.next();
-                // Compute the score(query, document)
-                tf = pe.positions.size();
-                l = this.docLengths.
-            }
-
-            listQueriedPostings.add(this.getPostings(query.terms.get(i)));
-        }
-        
-        
-        double df = result.size();
-        double N = this.docIDs.size();
-        double idf = 0;
-        double tf = 0;
-        double l = 0;
-        
-         
-        Iterator<PostingsList> it1 = listQueriedPostings.iterator();
-        while(it1.hasNext()){
-            pl = it.next();
-            Iterator<PostingsEntry> it2 = pl.iterator();
-            PostingsEntry pe = new PostingsEntry();
-            while(it2.hastNext()){
-                pe = it2.next();
-                tf = pe.positions.size();
-                l = this.docLengths.get(""+pe.docID);
-                idf = Math.log(N/df);
-                pe.setScore(tf*idf/l);
-            }
-        }
-
         result.sort();
         return result;
     }
-
 
     public PostingsList union_query(Query query){
         

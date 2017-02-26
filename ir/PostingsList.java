@@ -18,6 +18,7 @@ public class PostingsList implements Serializable, Cloneable {
     
     /** The postings list as a linked list. */
     private LinkedList<PostingsEntry> list = new LinkedList<PostingsEntry>();
+    private Map<Integer, Integer> checkList = new HashMap<Integer, Integer>();
 
     public PostingsList(){}
 
@@ -70,6 +71,21 @@ public class PostingsList implements Serializable, Cloneable {
             this.getLast().insertPosition(pos);
     }
 
+    /** [NEW]
+     *  Corresponding to docID and its corresponding positional index pos 
+     */
+    public void insert(int docID, double sc){
+        // If docID is in the list
+        if(this.checkList.containsKey(docID)){
+            this.get(this.checkList.get(docID)).update(sc);
+        }
+        else{
+            this.checkList.put(docID, this.list.size());
+            PostingsEntry p = new PostingsEntry(docID, sc);
+            p.update(sc);
+            this.list.add(p);
+        }
+    }
 
     public Iterator<PostingsEntry> iterator(){
         return this.list.iterator();

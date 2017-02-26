@@ -32,6 +32,10 @@ public class PostingsEntry implements Comparable<PostingsEntry>, Serializable {
         this.positions.add(pos);
     }
 
+    public void update(double sc){
+        this.score += sc;
+    }
+
     /**
      *  PostingsEntries are compared by their score (only relevant 
      *  in ranked retrieval).
