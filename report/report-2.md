@@ -10,10 +10,13 @@
 
 
 ## Task 2.3: What is a good search result?
-- Results can be seen in _LucasRodesGuirao.txt_.
+- Results can be seen in _LucasRodesGuirao.txt_, _LucasRodesGuirao-as1.txt_ and  _LucasRodesGuirao-as2.txt_.
 - I implemented a python script, _plot_precrec.py_, which reads the above mentioned txt file and plots the precision-recall curve at 10, 20, 30, 40 and 50.
+- Image _precrecplot.png_ shows the precision-recall curve. We see that >
+	* From recall = |relevant intersection returned|/|relevant| we observe that |relevant| remains constant, while the term |relevant intersection returned| can only increase as the number of considered documents increases.
+	* From precision = |relevant intersection returned|/|returned| we see that this can indeed decrease. For instance, As we increase the number of considered documents it is likely that less 'relevant' documents appear.
 
-
+----
 ## Task 1.4: Phrase queries
 - Results obtained match the ones in the tutorial
 - In this case, we note that we obtain less amount of files after searching. This is due to the fact that all phrase query results will also be intersection results. However, all intersection results do not necessarily need to be phrase query results.

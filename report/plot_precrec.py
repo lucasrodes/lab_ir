@@ -24,16 +24,16 @@ results = readFile("LucasRodesGuirao-as2.txt")
 PRE = np.array([])
 REC = np.array([])
 
-for i in range(10,51,5):
+for i in range(10,51,10):
 	PRE = np.append(PRE, precision(results[:i]))
 	REC = np.append(REC, recall(results[:i]))
 
-print "Precision:", PRE
-print "Recall:", REC
+print "Precision:", str(np.round(PRE*100)/100.)
+print "Recall:   ", str(REC)
 
 plt.plot(REC, PRE, 'r-')
-plt.axis([0, 1, 0, 1])
+plt.axis([np.min(REC), np.max(REC), np.min(PRE), np.max(PRE)])
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title("Recal-Precision curve")
+plt.title("Recall-Precision curve")
 plt.show()

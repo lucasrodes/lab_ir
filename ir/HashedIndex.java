@@ -208,9 +208,9 @@ public class HashedIndex implements Index {
             //System.err.println("count: " + queryRecord.get(query.terms.get(i)));
             //System.err.println("size: " + query.size());
             
-            termFrequency_query = queryRecord.get(q)/(new Double(query.size()));
+            termFrequency_query = 1;//queryRecord.get(q)/(new Double(query.size()));
             //termFrequency_query = 1+ Math.log(termFrequency_query);
-            documentFrequency_query = Math.log(nDocs/postList.size());
+            documentFrequency_query = 1;//Math.log(nDocs/postList.size());
             w_query = termFrequency_query*documentFrequency_query;
             // Ignote terms in query not appearing in collection
             /*if (Double.isInfinite(idf)){
@@ -227,8 +227,8 @@ public class HashedIndex implements Index {
             Iterator<PostingsEntry> it_d = postList.iterator();
             while(it_d.hasNext()){
                 postEnt = it_d.next();
-                termFrequency_doc = postEnt.positions.size()/
-                    (new Double(this.docLengths.get(""+postEnt.docID)));
+                termFrequency_doc = postEnt.positions.size();//
+                    //(new Double(this.docLengths.get(""+postEnt.docID)));
                 //termFrequency_doc = 1+ Math.log(termFrequency_doc);
                 w_doc =documentFrequency_doc*termFrequency_doc;
                 /*System.err.println("\n D" + postEnt.docID);
@@ -244,11 +244,11 @@ public class HashedIndex implements Index {
         // TODO: Normalize the score of document d with the norm of the vector containing
         // the tf-idf values of all the terms in document d.
 
-        /*Iterator<PostingsEntry> it = result.iterator();
+        Iterator<PostingsEntry> it = result.iterator();
         while(it.hasNext()){
             postEnt = it.next();
             postEnt.score /= (new Double(this.docLengths.get(""+postEnt.docID)));//(Math.sqrt(postEnt.norm2));
-        }*/
+        }
         
         result.sort();
         return result;
