@@ -14,8 +14,8 @@
 - Results can be seen in _LucasRodesGuirao.txt_, _LucasRodesGuirao-as1.txt_ and  _LucasRodesGuirao-as2.txt_.
 - I implemented a python script, _plot_precrec.py_, which reads the above mentioned txt file and plots the precision-recall curve at 10, 20, 30, 40 and 50.
 - Image _precrecplot.png_ shows the precision-recall curve. We see that:
-	* *Recall = |relevant intersection returned|/|relevant|*. We observe that |relevant| remains constant, while the term |relevant intersection returned| can only increase as the number of considered documents increases.
-	* *Precision = |relevant intersection returned|/|returned|*. We see that this can indeed decrease. For instance, As we increase the number of considered documents it is likely that less 'relevant' documents appear.
+	* **Recall = |relevant intersection returned|/|relevant|**. We observe that |relevant| remains constant, while the term |relevant intersection returned| can only increase as the number of considered documents increases.
+	* **Precision = |relevant intersection returned|/|returned|**. We see that this can indeed decrease. For instance, As we increase the number of considered documents it is likely that less 'relevant' documents appear.
 - Below you can find the corresponding picture
 
 ![Precision-Recall curve](https://github.com/lucasrodes/lab_ir/blob/master/report/precrecplot.png)
@@ -39,34 +39,40 @@ For detailed results report, check file _results_pagerank.txt_
 ## Task 1.5: What is a good search result?
 - I searched for the intersection query `graduate program mathematics` and assessed the relevance of the 22 resulting documents. My evaluation was as follows:
 
-Query | File name                                                 	| Relevance |
-------|:-----------------------------------------------------------:|-----------:
-1     | Biological_Systems_Engineering.f 						  	| 1			|
-1     | Candidate_Statements.f 										| 0			|
-1     | Computer_Science.f 											| 2			|
-1     | document_translated.f 										| 0			|
-1     | ECE_Course_Reviews.f 										| 0			|
-1     | Economics.f 												| 2			|
-1     | Elaine_Kasimatis.f 											| 1			|
-1     | Evelyn_Silvia.f 											| 1			|
-1     | Events_Calendars.f 											| 0			|
-1     | Fiber_and_Polymer_Science.f 								| 1			|
-1     | Hydrology.f 												| 0			|
-1     | Mathematics.f 												| 4			|
-1     | MattHh.f 													| 2			|
-1     | Private_Tutoring.f 											| 1			|
-1     | Quantitative_Biology_and_Bioinformatics.f 					| 1			|
-1     | Statistics.f 												| 3			|
-1     | Student_Organizations.f 									| 0			|
-1     | UC_Davis_English_Department.f 								| 0			|
-1     | UCD_Honors_and_Prizes.f 									| 0			|
-1     | University_Departments.f 									| 0			|
-1     | What_I_Wish_I_Knew...Before_Coming_to_UC_Davis_Entomology.f | 0			|
-1     | Wildlife%2C_Fish%2C_and_Conservation_Biology.f 				| 1 		|
+ID    | File name           | relevance           |
+------|:-------------------:|---------------------:
+121   |Davis      			| 0.00798059840550247
+21    |Photo_Requests	  	| 0.007730984456317006
+245   |UC_Davis 			| 0.007359630703669526
+1531  |Seed/Definition		| 0.005093884876376878
+1367  |departed_businesses 	| 0.0028365843639788293
+31    |Sacramento			| 0.0025368982636868537
+80    |ASUCD 				| 0.0022163829698854196 
+1040  |Woodland 			| 0.002182422761837147
+254   |campus 				| 0.00202342614246361
+452   |City_Council 		| 0.0019453622194147726
+157   |East_Davis			| 0.0016263026061710758
+392   |Yolo_County 			| 0.0016194797697939396
+169   |South_Davis 			| 0.0016097789983853183
+100   |West_Davis 			| 0.0015630307240319225
+561   |City_of_Davis 		| 0.0014601559872791186
+3870  |Cul-de-sacs	 		| 0.0014439442930812727
+997   |ASUCD_Senate 		| 0.001354354910116531
+884   |Interstate_80 		| 0.0012777054622262459
+202   |The_California_Aggie	| 0.0012661041494637345
+8     |2007 				| 0.0012574555890029367
+72    |Campus 				| 0.0012304828540332297
+145   |North_Davis 			| 0.0011900955970500443
+27    |Arboretum 			| 0.0010921363205047983
+645	  |Memorial_Union 		| 0.0010831187908053872
+490   |Davis_Enterprise 	| 0.0010626444775174563
+2883  |Dentists 			| 0.0010500858618729793
+81    |KDVS 				| 0.001026432324632966
+942   |2006 				| 0.0010101214289792184
+125   |Music_Scene 			| 0.0009522208532489646
+247   |Picnic_Day 			| 0.000402656092627628
 
 
-precision = |relevant union returned|/|returned| = 12/22 ~= 54%
-recall = |relevant union returned|/|relevant| = 12/100 ~= 12%
 
 ## Task 1.6: What is a good query?
 We are asked to create a query to obtain results resolving: **Info about the education in Mathematics on a graduate level at UC Davis**. In this regard, we are supposed to use *intersection query*. I have used:
