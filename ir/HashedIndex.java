@@ -32,9 +32,24 @@ public class HashedIndex implements Index {
     //public Map<String,Integer> docNorms = new HashMap<String,Integer>();
     /* Stores number of appearences of a word in a document */
     //public Map<String,Integer> docNorms = new HashMap<String,Integer>();
+    
+    final static int MAX_NUMBER_OF_DOCS = 2000000;
+    
+
+    /* This is what they should have given us! */
+    Hashtable<String,Integer> titleToNumber = new Hashtable<String,Integer>();
+    /**
+     *   Mapping from document names to document numbers.
+     */
+    Hashtable<String,Integer> docNumber = new Hashtable<String,Integer>();
+    /**
+     * Page rank scores of each document
+     */ 
+    double[] pageRank = new double[MAX_NUMBER_OF_DOCS];
 
     /** Constructor */
     public HashedIndex(){
+        this.loadPageRank();
         this.count = 0;
     }
 
@@ -81,8 +96,38 @@ public class HashedIndex implements Index {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        try(Reader reader = new FileReader("postings/titleToNumber.json")){
+            this.titleToNumber = (new Gson()).fromJson(reader, 
+            new TypeToken<Map<String, Integer>>(){}.getType());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
+
+    public void loadPageRank(){
+        try(Reader reader = new FileReader("ir/files/docNumber.json")){
+            this.docNumber = (new Gson()).fromJson(reader, 
+            new TypeToken<Hashtable<String, Integer>>(){}.getType());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try(Reader reader = new FileReader("ir/files/pageRank.json")){
+            this.pageRank = (new Gson()).fromJson(reader, 
+            new TypeToken<double[]>(){}.getType());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try(Reader reader = new FileReader("ir/files/titleToNumber.json")){
+            this.titleToNumber = (new Gson()).fromJson(reader, 
+            new TypeToken<Hashtable<String,Integer>>(){}.getType());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     /** [NEW] 
      *  Saves the token-termIDs map and list with document names
@@ -158,6 +203,8 @@ public class HashedIndex implements Index {
     public PostingsList search( Query query, int queryType, int rankingType, 
         int structureType ) {
 
+        System.err.println(pageRank[docNumber.get("121")]);
+
         if (query.size()>0){ 
             switch (queryType){
                 case Index.INTERSECTION_QUERY: 
@@ -168,7 +215,11 @@ public class HashedIndex implements Index {
                     return  phrase_query(query);
                 case Index.RANKED_QUERY:
                     System.err.println("Ranked query");
-                    return ranked_query(query);
+                    switch(rankingType){
+                        case Index.TF_IDF: return ranked_query(query, 0);
+                        case Index.PAGERANK: return ranked_query(query, 1);
+                        case Index.COMBINATION: return ranked_query(query, 2);
+                    }
                 default: 
                     System.out.println("not valid query");
                     return null;
@@ -180,8 +231,16 @@ public class HashedIndex implements Index {
     }
 
 
-    public PostingsList ranked_query(Query query){        
-        
+    public PostingsList ranked_query(Query query, int method){        
+        double w; // how much we rely on tf-idf
+
+        if (method == 0)
+            w = 1;
+        else if (method == 1)
+            w = 0;
+        else
+            w = 0.5;
+
         PostingsList result = new PostingsList();
         PostingsList postList = new PostingsList();
         PostingsEntry postEnt = new PostingsEntry();
@@ -217,10 +276,10 @@ public class HashedIndex implements Index {
                 idf = 0;
             }*/
 
-            /*System.err.println(query.terms.get(i));
-            System.err.println("\t tf_q: " +tf_q);
-            System.err.println("\t idf: " +idf);
-            System.err.println("\t tf*idf: " +tf_q*idf);*/
+            /*System.err.println(q);
+            System.err.println("\t tf_q: " +termFrequency_query);
+            System.err.println("\t idf: " +documentFrequency_query);
+            System.err.println("\t tf*idf: " +termFrequency_query*documentFrequency_query);*/
 
             // Iterate over each document
             documentFrequency_doc = Math.log(nDocs/postList.size());
@@ -231,12 +290,15 @@ public class HashedIndex implements Index {
                     //(new Double(this.docLengths.get(""+postEnt.docID)));
                 //termFrequency_doc = 1+ Math.log(termFrequency_doc);
                 w_doc =documentFrequency_doc*termFrequency_doc;
-                /*System.err.println("\n D" + postEnt.docID);
-                System.err.println("\t idf = " + idf);
-                System.err.println("\t tf_d = " + tf_d);
-                System.err.println("\t tf-idf = " + tf_d*idf);
-                System.err.println("\n\t score = " + tf_q*idf*tf_d*idf);
-                System.err.println("\t norm_d = " + (tf_d*idf)*(tf_d*idf));*/
+                /*if (this.docIDs.get(""+postEnt.docID).equals("Zombie_Walk.f")){
+                    System.err.println("\n" + this.docIDs.get(""+postEnt.docID));
+                    System.err.println("\t idf = " + documentFrequency_doc);
+                    System.err.println("\t tf_d = " + termFrequency_doc);
+                    System.err.println("\t w_doc = " + w_doc);
+                    System.err.println("\t w_query*w_doc = " + w_query*w_doc);
+                }*/
+                //System.err.println("\n\t score = " + tf_q*idf*tf_d*idf);
+                //System.err.println("\t norm_d = " + (tf_d*idf)*(tf_d*idf));
                 result.insert(postEnt.docID, w_query*w_doc);
             }
         }
@@ -247,12 +309,38 @@ public class HashedIndex implements Index {
         Iterator<PostingsEntry> it = result.iterator();
         while(it.hasNext()){
             postEnt = it.next();
+            /*if (this.docIDs.get(""+postEnt.docID).equals("Zombie_Walk.f")){
+                System.err.println("\n" + this.docIDs.get(""+postEnt.docID));
+                System.err.println("\t w = " + postEnt.score + "/"+ 
+                    (new Double(this.docLengths.get(""+postEnt.docID))));
+            }*/
             postEnt.score /= (new Double(this.docLengths.get(""+postEnt.docID)));//(Math.sqrt(postEnt.norm2));
+            /*if (this.docIDs.get(""+postEnt.docID).equals("Zombie_Walk.f")){
+                System.err.println("\t w = " + postEnt.score);
+            }*/
+
+            /*if (this.docIDs.get(""+postEnt.docID).equals("Davis.f")){
+                System.err.println(postEnt.docID + " corresponds to " + this.docIDs.get(""+postEnt.docID));
+            }*/
+            postEnt.score = w * postEnt.score + (1-w) * quality(postEnt.docID);
         }
         
+        //System.err.println("Peta? --- "+titleToNumber.get("Davis.f"));
         result.sort();
         return result;
     }
+
+
+    public double quality(int d){
+        /*if (this.docIDs.get(""+d).equals("Davis.f"))
+        {
+            System.err.println(this.docIDs.get(""+d));
+            System.err.println(titleToNumber.get(this.docIDs.get(""+d)));
+        }*/
+        //System.err.println(d+"--"+this.docIDs.get(""+d)+"--"+titleToNumber.get(this.docIDs.get(""+d)));
+        return this.pageRank[this.docNumber.get(""+titleToNumber.get(this.docIDs.get(""+d)))];
+    }
+
 
     public PostingsList union_query(Query query){
         

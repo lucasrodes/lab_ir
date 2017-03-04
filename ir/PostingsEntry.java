@@ -19,6 +19,7 @@ public class PostingsEntry implements Comparable<PostingsEntry>, Serializable {
 
     /** Constructors */
     public PostingsEntry( ){
+        this.score = 0;
     }
 
     public PostingsEntry( int dI, double sc){
@@ -30,10 +31,6 @@ public class PostingsEntry implements Comparable<PostingsEntry>, Serializable {
         this.docID = dI;
         this.score = sc;
         this.positions.add(pos);
-    }
-
-    public void update(double sc){
-        this.score += sc;
     }
 
     /**

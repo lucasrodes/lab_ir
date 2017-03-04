@@ -23068,8 +23068,8 @@
 23068;Specialty_sandwiches
 23069;starbucks
 23070;Yuriko
-23071;Z-World.ht
-23072;Z-World.t
+23071;Z-World.html
+23072;Z-World.txt
 23073;Z1_Property_Management/Talk
 23074;ZaanaHall
 23075;ZacMorris

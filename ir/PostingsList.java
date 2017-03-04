@@ -77,12 +77,12 @@ public class PostingsList implements Serializable, Cloneable {
     public void insert(int docID, double sc){
         // If docID is in the list
         if(this.checkList.containsKey(docID)){
-            this.get(this.checkList.get(docID)).update(sc);
+            this.get(this.checkList.get(docID)).score += sc;
         }
         else{
             this.checkList.put(docID, this.list.size());
             PostingsEntry p = new PostingsEntry(docID, sc);
-            p.update(sc);
+            //p.score =+ sc;
             this.list.add(p);
         }
     }
