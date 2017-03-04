@@ -5,8 +5,9 @@
 
 ## Task 2.2. Ranked Multiword Retrieval
 - For this task, I introduced the term _wq(t)_ to weight the different terms in the query. Assume we have terms _t1_ and _t2_ appearing in document _d_. Then, the score of _d_ is computed as: _wq(t1)*wd(t1) + wq(t2)*wd(t2)_
-- This should be normalized, at the end, by the length of the document _d_, number of words.
+- This should be normalized, at the end, by the length of the document _d_, number of words. 
 - Another approach is to normalize it using the euclidean distance: _sqrt(sum_k{wd(tk)^2})_, for all terms _tk_ in _d_. I did not use the cosine similarity, seemed a world to me.
+- Furthermore, log(tf+1) could be interesting to use. If a document contains a word _m_ times and another document contains that word _2m_ times, the later is not necessarily two times as much relevant as the first one!
 
 
 ## Task 2.3: What is a good search result?
@@ -15,7 +16,20 @@
 - Image _precrecplot.png_ shows the precision-recall curve. We see that >
 	* From recall = |relevant intersection returned|/|relevant| we observe that |relevant| remains constant, while the term |relevant intersection returned| can only increase as the number of considered documents increases.
 	* From precision = |relevant intersection returned|/|returned| we see that this can indeed decrease. For instance, As we increase the number of considered documents it is likely that less 'relevant' documents appear.
+- Below you can find the corresponding picture
 
+![Precision-Recall curve](https://github.com/lucasrodes/lab_ir/blob/master/report/precrecplot.png)
+
+
+## Task 2.4: Computing PageRank with Power Iteration
+- Done perfectly! Had to tune epsilon to an optimum number tho.
+- The highest ranked document is Davis, which is the homepage and makes sense since various documents might link to it. The order of ranked documents is: 
+
+_Davis, Photo_Requests, UC_Davis, Seed/Definition, departed_businesses_
+
+which seem to be general pages of the wiki. On the contrary, as we go down we find more specific documents such as _Picnic_Day_ or _Music_Scene_. Nonetheless we are only considering files within the top 30 rank, and hence all files are still generic.
+
+For detailed results report, check file _results_pagerank.txt_
 ----
 ## Task 1.4: Phrase queries
 - Results obtained match the ones in the tutorial
