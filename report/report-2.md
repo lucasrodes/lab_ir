@@ -29,15 +29,7 @@ _Davis, Photo_Requests, UC_Davis, Seed/Definition, departed_businesses_
 
 which seem to be general pages of the wiki. On the contrary, as we go down we find more specific documents such as _Picnic_Day_ or _Music_Scene_. Nonetheless we are only considering files within the top 30 rank, and hence all files are still generic.
 
-For detailed results report, check file _results_pagerank.txt_
-----
-## Task 1.4: Phrase queries
-- Results obtained match the ones in the tutorial
-- In this case, we note that we obtain less amount of files after searching. This is due to the fact that all phrase query results will also be intersection results. However, all intersection results do not necessarily need to be phrase query results.
-
-
-## Task 1.5: What is a good search result?
-- I searched for the intersection query `graduate program mathematics` and assessed the relevance of the 22 resulting documents. My evaluation was as follows:
+The table below shows the results in detail.
 
 ID    | File name           | relevance           |
 ------|:-------------------:|---------------------:
@@ -73,108 +65,86 @@ ID    | File name           | relevance           |
 247   |Picnic_Day 			| 0.000402656092627628
 
 
+## Task 2.5: Monte-Carlo PageRank Approximation
+For this exercise I implemented all the different approaches of the MC approximations. Please find some remarks below.
 
-## Task 1.6: What is a good query?
-We are asked to create a query to obtain results resolving: **Info about the education in Mathematics on a graduate level at UC Davis**. In this regard, we are supposed to use *intersection query*. I have used:
+- As we increase the number of walks or iterations the MC methods become very slow. In these cases, the Power Iteration algorithm is way quicker and provides good results. I can imagine that as the corpus of files increases, PI becomes unfeasible.
+- MC1 and MC5 are faster. But it all depends on the parameters that we use.
+- The performance measures were a bit confusing, since it **does not make any sense** to compute the Euclidean distance between the scores of the 30 first ranked documents. Note that the IDs of the documents might vary from method to method.
+- In this regard, I obtained the Euclidean distance of the scores of the 30 first ranked documents using the PI method. In the other methods these documents do not necessarily appear in the first 30 positions.
 
-**graduate mathematics course**
+### MC1
 
-- university mathematics: 44 matches
-- university mathematics program: P = 7/19
+To evaluate the performance, we increase the parameter _N_ which denotes the number of walks.
 
-2011_Archive.f - 0
-Candidate_Statements.f - 0
-Children%27s_Summer_Programs.f - 0
-Computer_Science.f - 2
-document_translated.f - 0
-Evelyn_Silvia.f - 1
-Majors.f - 1
-MattHh.f - 2
-Patrick_Sheehan.f - 0
-Private_Tutoring.f - 1
-Seminars_Project.f - 0
-Statistics.f - 3
-Student_Organizations.f - 0
-Town_History.f - 0
-UC_Davis_English_Department.f - 0
-UCD_Honors_and_Prizes.f - 0
-University_Departments.f - 1
-What_I_Wish_I_Knew...Before_Coming_to_UC_Davis_Entomology.f - 0
-Wiki_History.f - 0
+N   	| Error on 30 first		| Error on 30 last    |
+--------|:---------------------:|---------------------:
+10   	|0.01637586651516146  	| 1.1451215838402431E-4
+100   	|0.02602037858119098    | 1.1451215838402431E-4
+1000    |0.0059717284311837805 	| 9.855450807788597E-4
+10000   |0.002835009264502715 	| 2.0544116026881217E-4
+100000  |6.406579204139922E-4	| 8.038007264840292E-5
+1000000	|3.152729167836288E-4	| 2.5941397012521065E-5
 
-university mathematics program graduate: P = 6/12
+We observe that as _N_ increases, the error decreases.
 
-Candidate_Statements.f - 0
-Computer_Science.f - 2
-document_translated.f - 0
-Evelyn_Silvia.f - 1
-MattHh.f - 2
-Private_Tutoring.f - 1
-Statistics.f - 3
-Student_Organizations.f - 0
-UC_Davis_English_Department.f - 0
-UCD_Honors_and_Prizes.f - 0
-University_Departments.f - 1
-What_I_Wish_I_Knew...Before_Coming_to_UC_Davis_Entomology.f - 0
+### MC2
 
-- graduate program mathematics: 22 matches
-P = 12/22
+In this example we tune the parameter _m_, which is the number of iterations. Remember that the total number of runs is _N = m*n_, where _n_ is the number of files.
 
-- mathematics course university: P = 5/14
-2011_Archive.f - 0
-archive.f - 0
-Computer_Science.f - 2
-document_translated.f - 0
-EB_Roessler.f - 1
-GregKuperberg.f - 0
-MattHh.f - 2
-Private_Tutoring.f - 1
-Shadiness_Factor.f - 0
-Statistics.f - 3
-Teaching_Assistants.f
-UC_Davis_English_Department.f - 0
-UCD_Honors_and_Prizes.f - 0
-What_I_Wish_I_Knew...Before_Coming_to_UC_Davis_Entomology.f - 0
-
-- mathematics uc davis graduate program: 10/17 ~= 58%
-Candidate_Statements.f - 0
-Computer_Science.f - 2
-ECE_Course_Reviews.f - 0
-Economics.f - 2
-Elaine_Kasimatis.f -1
-Evelyn_Silvia.f - 1
-Events_Calendars.f - 0
-Hydrology.f - 0
-Mathematics.f - 4
-MattHh.f - 2
-Private_Tutoring.f - 1
-Statistics.f - 3
-Student_Organizations.f - 0
-UC_Davis_English_Department.f - 0
-UCD_Honors_and_Prizes.f - 0
-University_Departments.f - 1
-What_I_Wish_I_Knew...Before_Coming_to_UC_Davis_Entomology.f - 0
-Wildlife%2C_Fish%2C_and_Conservation_Biology.f - 1
-
-- mathematics uc davis graduate program university: P = 7/11 ~= 63%
-
-Candidate_Statements.f - 0
-Computer_Science.f - 2
-Evelyn_Silvia.f - 1
-MattHh.f - 2
-Private_Tutoring.f - 1
-Statistics.f - 3
-Student_Organizations.f - 0
-UC_Davis_English_Department.f - 0
-UCD_Honors_and_Prizes.f - 0
-University_Departments.f - 1
-What_I_Wish_I_Knew...Before_Coming_to_UC_Davis_Entomology.f - 1
+m   	| Error on 30 first		| Error on 30 last    |
+--------|:---------------------:|---------------------:
+1   	|0.0017790310787830315 	| 1.72782833955441E-4
+5   	|0.0011084699084054305  | 8.14134440610171E-5
+10   	|6.599837013140591E-4	| 5.272728767603463E-5
+50	    |1.6860034714334064E-4	| 1.5424113586773976E-5
+100		|1.5585944921191845E-4	| 1.774131459723324E-5
+500		|6.589186369720324E-5	| 6.317564331370763E-6
 
 
-We note that the longer is the query the less results we get. However, we are able to get more precise and specific results. Thus, if we wrote the whole information need description we run the risk of no retrieving anything at all.
+### MC3
 
-## Task 1.7
+Same tendence as in MC2.
 
-* `ir/`: Prior to task 1.7
-* `ir1/`: Stores file per postingslist
-* `ir2/`: Trying to optimize 
+m   	| Error on 30 first		| Error on 30 last	  |
+--------|:---------------------:|---------------------:
+1   	|9.346771468619439E-4 	| 6.701625483534689E-5
+5   	|2.3876435194408272E-4  | 2.564015596145578E-5
+10   	|2.5543256574445653E-4	| 1.3486433465378679E-5
+50	    |1.1239485814957683E-4	| 1.1481498239241906E-5
+100		|9.415930330381204E-5	| 4.208586714965573E-6
+500		|3.675885228523189E-5	| 2.2361562489291396E-6
+
+We observe that it converges really fast!! We obtain a really accurate result for _m = 1_.
+
+### MC4
+
+This method is very similar to MC3 but much faster since once we end up in a file with
+no outlinks we break the loop!
+
+m   	| Error on 30 first		| Error on 30 last	  |
+--------|:---------------------:|---------------------:
+1   	|8.792356629461152E-4 	| 4.080368276788959E-5
+5   	|5.640427684585316E-4   | 2.296692039185706E-5
+10   	|5.277122533848887E-4	| 1.4674031403701697E-5
+50	    |1.869811368126223E-4	| 6.499375731705036E-6
+100		|1.1261676823645375E-4	| 4.1771109292421374E-6
+500		|4.9217048807603616E-5	| 1.6812538608612396E-6
+
+
+### MC5
+
+Similar to MC1 but faster, since we break when we are in a file without outlinks (like MC4)
+
+N   	| Error on 30 first		| Error on 30 last    |
+--------|:---------------------:|---------------------:
+10   	|0.0585655017678655  	| 1.1451215838402431E-4
+100   	|0.01692132778560167    | 1.1451215838402431E-4
+1000    |0.006568214496783953 	| 0.001013033964001212
+10000   |0.0021649894187068894 	| 1.8831526581657385E-4
+100000  |6.381213340031603E-4	| 6.732915407930334E-5
+1000000	|2.888929090829961E-4	| 1.6805618287639385E-5
+10000000|7.143526934526465E-5	| 5.877840449205131E-6
+
+## Task 2.6: Combine tf-idf and PageRank 
+

@@ -80,13 +80,12 @@ public class PageRank{
     /* --------------------------------------------- */
 
 
-    public PageRank( String filename, int method ) {
+    public PageRank( String filename, int method, int parameter ) {
     	int noOfDocs = readDocs( filename );
         readTitles();
         //System.out.println("real: "+ noOfDocs);
         //System.out.println("est: "+link.size());
-    	computePagerank( method, noOfDocs );
-        printBestResults(30);
+    	computePagerank( method, noOfDocs, parameter );
     }
 
 
@@ -173,7 +172,7 @@ public class PageRank{
         String filename = "articleTitles.txt";
         int fileIndex = 0;
         try {
-            System.err.print( "Reading titles... " );
+            System.err.println( "Reading titles... " );
             BufferedReader in = new BufferedReader( new FileReader( filename ));
             String line;
             while ((line = in.readLine()) != null && fileIndex<MAX_NUMBER_OF_DOCS ) 
@@ -195,20 +194,20 @@ public class PageRank{
     /*
      *   Computes the pagerank of each document.
      */
-    void computePagerank( int method, int numberOfDocs) {
+    void computePagerank( int method, int numberOfDocs, int parameter) {
         double[] p = new double[numberOfDocs];
         switch (method){
             case 0: powerIteration(numberOfDocs);
                         break;
-            case 1: monteCarlo1(numberOfDocs, 1000);
+            case 1: monteCarlo1(numberOfDocs, parameter);
                         break;
-            case 2: monteCarlo2(numberOfDocs, 1000);
+            case 2: monteCarlo2(numberOfDocs, parameter);
                         break;
-            case 3: monteCarlo3(numberOfDocs, 1000);    
+            case 3: monteCarlo3(numberOfDocs, parameter);    
                         break;
-            case 4: monteCarlo4(numberOfDocs, 10);
+            case 4: monteCarlo4(numberOfDocs, parameter);
                         break;
-            case 5: monteCarlo5(numberOfDocs, 1000);
+            case 5: monteCarlo5(numberOfDocs, parameter);
                         break;
         }
 
@@ -439,20 +438,17 @@ public class PageRank{
 
     }*/
 
-    void printBestResults(int numberOfResults){
-        //Arrays.sort(pageRank);
-        double[] pRank = new double[pageRank.length];
+    Hashtable<Integer,Double> bestResults(int numberOfResults, boolean print){
 
+        Hashtable<Integer,Double> best = new Hashtable<Integer,Double>();
+        double max;
+        int id_max;
+        double[] pRank = new double[pageRank.length];
         System.arraycopy( pageRank, 0, pRank, 0, pageRank.length );
 
-        double s = 0;
-        for (int j = 0; j < pRank.length; j++){
-            s += pRank[j];
-        }
-
         for (int i = 0; i < numberOfResults; i++){
-            double max = 0.0;
-            int id_max = 0;
+            max = 0.0;
+            id_max = 0;
             for (int j = 0; j < pRank.length; j++){
                 if (pRank[j] > max){
                     max = pRank[j];
@@ -460,14 +456,48 @@ public class PageRank{
                 }
             }
             pRank[id_max] = -1;
-            System.out.println(docName[id_max]+": "+max);
+            if (print)
+                System.out.println(docName[id_max]+": "+max);
+            best.put(id_max, max);
         }
 
-
-
-        System.out.println("sum = " + s);
+        return best;
     }
 
+
+    Hashtable<Integer,Double> worstResults(int numberOfResults, boolean print){
+
+        Hashtable<Integer,Double> worst = new Hashtable<Integer,Double>();
+        double min;
+        int id_min;
+        double[] pRank = new double[pageRank.length];
+        System.arraycopy( pageRank, 0, pRank, 0, pageRank.length );
+
+        for (int i = 0; i < numberOfResults; i++){
+            min = 10;
+            id_min = 0;
+            for (int j = 0; j < pRank.length; j++){
+                if (pRank[j] < min){
+                    min = pRank[j];
+                    id_min = j;
+                }
+            }
+            pRank[id_min] = 10;
+            if (print)
+                System.out.println(docName[id_min]+": "+min);
+            worst.put(id_min, min);
+        }
+
+        return worst;
+    }
+
+
+    void checkSumProbabilities(){
+        double s = 0;
+        for (int j = 0; j < this.pageRank.length; j++){
+            s += this.pageRank[j];
+        }
+    }
     /* --------------------------------------------- */
 
     public void save(){
@@ -490,6 +520,24 @@ public class PageRank{
         }
     }
 
+
+    public double euclideanDistance(Hashtable<Integer,Double> h){
+        double error = 0, value;
+        int key;
+        Iterator it = h.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry pair = (Map.Entry)it.next();
+            value = (double)pair.getValue();
+            key = (int)pair.getKey();
+            //System.out.println(key + " = " + value);
+            error += (this.pageRank[key] - value)*(this.pageRank[key] - value);
+            it.remove(); // avoids a ConcurrentModificationException
+        }
+
+        error = Math.sqrt(error);
+        return error;
+    }
+
     /* --------------------------------------------- */
    
     public static void main( String[] args ) {
@@ -497,11 +545,30 @@ public class PageRank{
 	    System.err.println( "Please give the name of the link file" );
 	}
 	else {
-	    PageRank p1 = new PageRank( args[0], 0 );
-        String file = "Davis.f";
-        System.err.println(file + " -- " + p1.titleToNumber.get(file));
+	    Hashtable<Integer,Double> best = new Hashtable<Integer,Double>();
+        Hashtable<Integer,Double> worst = new Hashtable<Integer,Double>();
+        PageRank p1 = new PageRank( args[0], 0, 0 );
+        best = p1.bestResults(30, false);
+        worst = p1.worstResults(30, true);
+
+        PageRank p2 = new PageRank( args[0], 5, 10000000 );
+        
+        System.err.println("*---------------*");
+        System.err.println("BEEEST");    
+        p2.bestResults(30, true);
+        double error = p2.euclideanDistance(best); 
+        System.err.println("Error best = " + error);
+        System.err.println("*---------------*");
+        System.err.println("WOOORST"); 
+        p2.worstResults(30, true);
+        error = p2.euclideanDistance(worst);
+        System.err.println("Error worst = " + error);
+        /*String file = "Davis.f";
+        System.err.println(file + "----" + p1.docName[26]);
+        //System.err.println(p1.pageRank[p1.docNumber.get(""+26)]);
+        //System.err.println(file + " -- " + p1.titleToNumber.get(file));
         int name = p1.titleToNumber.get(file);
-        System.err.println(p1.pageRank[p1.docNumber.get(""+name)]);
+        System.err.println(p1.pageRank[p1.docNumber.get(""+name)]);*/
         //PageRank p2 = new PageRank( args[0], 1 );
         p1.save();
 	}
