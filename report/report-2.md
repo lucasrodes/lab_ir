@@ -164,7 +164,7 @@ Find below the results for the different approaches for the query _graduate prog
 
 
 Position| **TF-IDF**						| **PAGERANK**    						|  **COMBINATION**
---------|:---------------------------------:|:-------------------------------------:|:------------------------------:
+--------|:----------------------------------|:--------------------------------------|:------------------------------
 0   	|Math.f 							|Davis.f 								|Math.f
 1   	|TravisTaylor.f 					|UC_Davis.f 							|TravisTaylor.f
 2    	|Davis_Graduate.f 					|Sacramento.f 							|Grad_Students.f
