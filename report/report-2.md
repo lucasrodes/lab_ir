@@ -163,24 +163,27 @@ In this task, three different modalities are considered:
 Find below the results for the different approaches for the query _graduate program mathematics_
 
 
-Position| **TF-IDF**		| **PAGERANK**    |  **COMBINATION**
---------|:---------------------:|---------------------:
-0   	|Math.f|Davis.f|Math.f
-1   	|TravisTaylor.f|UC_Davis.f|TravisTaylor.f
-2    	|Davis_Graduate.f|Sacramento.f|Grad_Students.f
-3   	|Grad_Students.f|ASUCD.f|The_Grad.f
-4  		|The_Grad.f|Campus.f|Davis_Graduate.f
-5		|EfremRensi.f|KDVS.f|EfremRensi.f
-6 		|GRE.f|Music_Scene.f|GRE.f
-7 		|JulieB.f|Picnic_Day.f|JulieB.f
-8 		|EOP.f|Davis_Senior_High_School.f|EOP.f
-9 		|Mentorships_for_Undergraduate_Research_in_Agriculture%2C_Letters%2C_and_Science.f |Town_Flora.f|Mentorships_for_Undergraduate_Research_in_Agriculture%2C_Letters%2C_and_Science.f
-10 		|Wilfred.f|Unitrans.f|Wilfred.f
-11		|Planned_Education_Leave_Program.f|Apartments.f|Planned_Education_Leave_Program.f
-12		|Agricultural_Chemistry.f|2008.f |Agricultural_Chemistry.f
-13		|JillNi.f|Bay_Area.f|JillNi.f
-14		|DavidGeisler.f|UC_System.f|DavidGeisler.f
-15		|APILP.f|Davis_Joint_Unified_School_District.f|Bridge.f
+Position| **TF-IDF**						| **PAGERANK**    						|  **COMBINATION**
+--------|:---------------------------------:|--------------------------------------:|--------------------------------
+0   	|Math.f 							|Davis.f 								|Math.f
+1   	|TravisTaylor.f 					|UC_Davis.f 							|TravisTaylor.f
+2    	|Davis_Graduate.f 					|Sacramento.f 							|Grad_Students.f
+3   	|Grad_Students.f 					|ASUCD.f 								|The_Grad.f
+4  		|The_Grad.f 						|Campus.f 								|Davis_Graduate.f
+5		|EfremRensi.f 						|KDVS.f 								|EfremRensi.f
+6 		|GRE.f 								|Music_Scene.f 							|GRE.f
+7 		|JulieB.f 							|Picnic_Day.f 							|JulieB.f
+8 		|EOP.f 								|Davis_Senior_High_School.f 			|EOP.f
+9 		|Mentorships_for_... (*)			|Town_Flora.f 							|Mentorships_for_... (*)
+10 		|Wilfred.f 							|Unitrans.f 							|Wilfred.f
+11		|Planned_Education_Leave_Program.f 	|Apartments.f 							|Planned_Education_Leave_Program.f
+12		|Agricultural_Chemistry.f 			| 2008.f 								|Agricultural_Chemistry.f
+13		|JillNi.f 							|Bay_Area.f 							|JillNi.f
+14		|DavidGeisler.f 					|UC_System.f 							|DavidGeisler.f
+15		|APILP.f 							|Davis_Joint_Unified_School_District.f 	|Bridge.f
+
+(*) Whole filename is Mentorships_for_Undergraduate_Research_in_Agriculture%2C_Letters%2C_and_Science.f
+
 
 With the scores:
 
