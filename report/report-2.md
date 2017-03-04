@@ -147,4 +147,96 @@ N   	| Error on 30 first		| Error on 30 last    |
 10000000|7.143526934526465E-5	| 5.877840449205131E-6
 
 ## Task 2.6: Combine tf-idf and PageRank 
+In this problem I added the functionality of pageRank to the search engine. PageRank helps us determining wether a document is trustfull or not, i.e. it gives a measure of its value. This measure is independent of the query. This can be combined with the TF-IDF in order to give a better measure of the scores of the documents. 
+
+Given a query _q_, we score each document using the tf-idf score as _tf-idf(q,d)_. In addition, we compute the pageRank for each document _PR(d)_. To combine both scores, we use a weight term _w_ which says how much we rely on the tf-idf measure:
+
+_score = w * tf-idf(q,d) + (1-w) * PR(d)_
+
+
+In this task, three different modalities are considered:
+
+1. **Only tf-idf**: We set _w = 1_
+2. **Only PageRank**: We set _w = 0_
+3. **Combination of both**: We can play with the weight parameter, I set it to set _w = 0.7_.
+
+Find below the results for the different approaches for the query _graduate program mathematics_
+
+
+Position| **TF-IDF**		| **PAGERANK**    |  **COMBINATION**
+--------|:---------------------:|---------------------:
+0   	|Math.f|Davis.f|Math.f
+1   	|TravisTaylor.f|UC_Davis.f|TravisTaylor.f
+2    	|Davis_Graduate.f|Sacramento.f|Grad_Students.f
+3   	|Grad_Students.f|ASUCD.f|The_Grad.f
+4  		|The_Grad.f|Campus.f|Davis_Graduate.f
+5		|EfremRensi.f|KDVS.f|EfremRensi.f
+6 		|GRE.f|Music_Scene.f|GRE.f
+7 		|JulieB.f|Picnic_Day.f|JulieB.f
+8 		|EOP.f|Davis_Senior_High_School.f|EOP.f
+9 		|Mentorships_for_Undergraduate_Research_in_Agriculture%2C_Letters%2C_and_Science.f |Town_Flora.f|Mentorships_for_Undergraduate_Research_in_Agriculture%2C_Letters%2C_and_Science.f
+10 		|Wilfred.f|Unitrans.f|Wilfred.f
+11		|Planned_Education_Leave_Program.f|Apartments.f|Planned_Education_Leave_Program.f
+12		|Agricultural_Chemistry.f|2008.f |Agricultural_Chemistry.f
+13		|JillNi.f|Bay_Area.f|JillNi.f
+14		|DavidGeisler.f|UC_System.f|DavidGeisler.f
+15		|APILP.f|Davis_Joint_Unified_School_District.f|Bridge.f
+
+With the scores:
+
+1. **TF-IDF**
+
+0.Math.f   2,45851
+1.TravisTaylor.f   0,98340
+2.Davis_Graduate.f   0,97262
+3.Grad_Students.f   0,97262
+4.The_Grad.f   0,97262
+5.EfremRensi.f   0,78349
+6.GRE.f   0,72946
+7.JulieB.f   0,64841
+8.EOP.f   0,63534
+9.Mentorships_for_Undergraduate_Research_in_Agriculture%2C_Letters%2C_and_Science.f   0,63534
+10.Wilfred.f   0,53052
+11.Planned_Education_Leave_Program.f   0,50828
+12.Agricultural_Chemistry.f   0,48631
+13.JillNi.f   0,48631
+14.DavidGeisler.f   0,44890
+15.APILP.f   0,42356
+
+2.
+
+0.Davis.f   0,00798
+1.UC_Davis.f   0,00736
+2.Sacramento.f   0,00254
+3.ASUCD.f   0,00222
+4.Campus.f   0,00123
+5.KDVS.f   0,00103
+6.Music_Scene.f   0,00095
+7.Picnic_Day.f   0,00094
+8.Davis_Senior_High_School.f   0,00088
+9.Town_Flora.f   0,00088
+10.Unitrans.f   0,00088
+11.Apartments.f   0,00085
+12.2008.f   0,00083
+13.Bay_Area.f   0,00068
+14.UC_System.f   0,00059
+15.Davis_Joint_Unified_School_District.f   0,00059
+
+3. 
+0.Math.f   1,72097
+1.TravisTaylor.f   0,68839
+2.Grad_Students.f   0,68090
+3.The_Grad.f   0,68085
+4.Davis_Graduate.f   0,68084
+5.EfremRensi.f   0,54845
+6.GRE.f   0,51063
+7.JulieB.f   0,45390
+8.EOP.f   0,44475
+9.Mentorships_for_Undergraduate_Research_in_Agriculture%2C_Letters%2C_and_Science.f   0,44475
+10.Wilfred.f   0,37137
+11.Planned_Education_Leave_Program.f   0,35580
+12.Agricultural_Chemistry.f   0,34042
+13.JillNi.f   0,34042
+14.DavidGeisler.f   0,31424
+15.Bridge.f   0,29650
 
