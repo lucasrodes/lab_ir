@@ -13,16 +13,16 @@
 ## Task 2.3: What is a good search result?
 - Results can be seen in _LucasRodesGuirao.txt_, _LucasRodesGuirao-as1.txt_ and  _LucasRodesGuirao-as2.txt_.
 - I implemented a python script, _plot_precrec.py_, which reads the above mentioned txt file and plots the precision-recall curve at 10, 20, 30, 40 and 50.
-- Image _precrecplot.png_ shows the precision-recall curve. We see that >
-	* From recall = |relevant intersection returned|/|relevant| we observe that |relevant| remains constant, while the term |relevant intersection returned| can only increase as the number of considered documents increases.
-	* From precision = |relevant intersection returned|/|returned| we see that this can indeed decrease. For instance, As we increase the number of considered documents it is likely that less 'relevant' documents appear.
+- Image _precrecplot.png_ shows the precision-recall curve. We see that:
+	* *Recall = |relevant intersection returned|/|relevant|*. We observe that |relevant| remains constant, while the term |relevant intersection returned| can only increase as the number of considered documents increases.
+	* *Precision = |relevant intersection returned|/|returned|*. We see that this can indeed decrease. For instance, As we increase the number of considered documents it is likely that less 'relevant' documents appear.
 - Below you can find the corresponding picture
 
 ![Precision-Recall curve](https://github.com/lucasrodes/lab_ir/blob/master/report/precrecplot.png)
 
 
 ## Task 2.4: Computing PageRank with Power Iteration
-- Done perfectly! Had to tune epsilon to an optimum number tho.
+- The results match the given ones, provided that we use `EPSILON = 0.00001`.
 - The highest ranked document is Davis, which is the homepage and makes sense since various documents might link to it. The order of ranked documents is: 
 
 _Davis, Photo_Requests, UC_Davis, Seed/Definition, departed_businesses_
