@@ -238,7 +238,7 @@ public class HashedIndex implements Index {
      */
     public PostingsList search( Query query, int queryType, int rankingType,
         int structureType ) {
-
+        double idf_threshold = new Double(4);
         // System.err.println(pageRank[docNumber.get("121")]);
 
         if (query.size()>0){
@@ -252,9 +252,9 @@ public class HashedIndex implements Index {
                 case Index.RANKED_QUERY:
                     System.err.println("Ranked query");
                     switch(rankingType){
-                        case Index.TF_IDF: return ranked_query(query, 1);
-                        case Index.PAGERANK: return ranked_query(query, 0);//ranked_query2(query, 0);
-                        case Index.COMBINATION: return ranked_query(query, 0.005);
+                        case Index.TF_IDF: return ranked_query(query, 1, idf_threshold);
+                        case Index.PAGERANK: return ranked_query(query, 0, idf_threshold);//ranked_query(query, 0, idf_threshold);//ranked_query2(query, 0);
+                        case Index.COMBINATION: return ranked_query(query, 0.005, idf_threshold);
                     }
                 default:
                     System.out.println("not valid query");
@@ -266,190 +266,107 @@ public class HashedIndex implements Index {
             return null;
     }
 
+    public PostingsList ranked_query(Query query, double w, double idf_threshold){
+        // query: Query inserted by the user
+        // w: Weight the tf-idf score, usually very small to account for scale difference with pagerank
+        // idf_threshold: Threshold to perform index elimination
 
-    public PostingsList ranked_query(Query query, double w){
-        // w denotes how much we rely on tf-idf, should be small due to scale between tf-idf and
-        // pagerank
-
-        PostingsList result = this.union_query(query);//new PostingsList();
-        PostingsEntry postEnt = new PostingsEntry();
-
-        double nDocs = this.docIDs.size();
-        double w_query_term;
-        double termFrequency_doc, documentFrequency_doc, w_doc_term;
-
-        String term;
-
-
-        for(Map.Entry<String, Double> entry : query.weights.entrySet()){
-            term = entry.getKey();
-            w_query_term = entry.getValue();
-            documentFrequency_doc = Math.log(nDocs/new Double(this.idfMap.get(term)));
-            Iterator<PostingsEntry> it_d = result.iterator();
-            while(it_d.hasNext()){
-                postEnt = it_d.next();
-                if (this.tfMap.get(postEnt.docID).containsKey(term)){
-                    termFrequency_doc = this.tfMap.get(postEnt.docID).get(term);
-                    w_doc_term = documentFrequency_doc*termFrequency_doc;
-                    postEnt.score += w_query_term*w_doc_term;
-                }
-            }
-        }
-
-        // TODO: Normalize the score of document d with the norm of the vector containing
-        // the tf-idf values of all the terms in document d.
-
-        Iterator<PostingsEntry> it = result.iterator();
-        while(it.hasNext()){
-            postEnt = it.next();
-            postEnt.score /= (new Double(this.docLengths.get(""+postEnt.docID)));//(Math.sqrt(postEnt.norm2));
-            postEnt.score = w * postEnt.score + (1-w) * quality(postEnt.docID);
-        }
-
-        result.sort();
-        return result;
-    }
-
-
-    public PostingsList ranked_query1(Query query, double w){
-        // w denotes how much we rely on tf-idf, should be small due to scale between tf-idf and
-        // pagerank
-
-        PostingsList result = this.union_query(query);//new PostingsList();
-        PostingsEntry postEnt = new PostingsEntry();
-
-        double nDocs = this.docIDs.size();
-        double w_query_term;
-        double termFrequency_doc, documentFrequency_doc, w_doc_term;
-
-        String term;
-
-
-        for(Map.Entry<String, Double> entry : query.weights.entrySet()){
-            term = entry.getKey();
-            w_query_term = entry.getValue();
-            documentFrequency_doc = Math.log(nDocs/new Double(this.idfMap.get(term)));
-            Iterator<PostingsEntry> it_d = result.iterator();
-            while(it_d.hasNext()){
-                postEnt = it_d.next();
-                if (this.tfMap.get(postEnt.docID).containsKey(term)){
-                    termFrequency_doc = this.tfMap.get(postEnt.docID).get(term);
-                    w_doc_term = documentFrequency_doc*termFrequency_doc;
-                    postEnt.score += w_query_term*w_doc_term;
-                }
-            }
-        }
-
-        // TODO: Normalize the score of document d with the norm of the vector containing
-        // the tf-idf values of all the terms in document d.
-
-        Iterator<PostingsEntry> it = result.iterator();
-        while(it.hasNext()){
-            postEnt = it.next();
-            postEnt.score /= (new Double(this.docLengths.get(""+postEnt.docID)));//(Math.sqrt(postEnt.norm2));
-            postEnt.score = w * postEnt.score + (1-w) * quality(postEnt.docID);
-        }
-
-        result.sort();
-        return result;
-    }
-
-
-    public PostingsList ranked_query2(Query query, double w){
-        // w denotes how much we rely on tf-idf
-
+        /*
+         * 1) Obtain union of results containing the considered query terms
+         */
+        long startTime = System.nanoTime();
         PostingsList result = new PostingsList();
-        PostingsList postList = new PostingsList();
-        PostingsList pospptList = this.union_query(query);
+
+        // Obtain union of terms above idf threshold if indexElimination is true
+        // (Set idf_threshold to zero to disable this feature)
+        Set<String> termsToConsider = this.queryTermsConsidered(query, idf_threshold);
+        result = this.union_query(query, termsToConsider);
+        //System.err.println("Size of result is " + result.size());
+
+        long estimatedTime = (System.nanoTime() - startTime)/1000000;
+        System.err.println("* Union took: " + estimatedTime);
+
+
+        /*
+         * 2) Iterate over PostingsEntries and build the solution
+         */
+        startTime = System.nanoTime();
+        // Required when iterating over a PostingsList
         PostingsEntry postEnt = new PostingsEntry();
-        Map<String, Double> queryRecord = new HashMap<String, Double>();
-        String q;
-
+        // Number of documents in the collection
         double nDocs = this.docIDs.size();
-        double termFrequency_query, documentFrequency_query, w_query;
-        double termFrequency_doc, documentFrequency_doc, w_doc;
+        // Weight of a query vector coefficient
+        double w_query_term;
+        // Document tf-idf variables
+        double termFrequency_doc, documentFrequency_doc, w_doc_term;
 
-        // Obtain number of occurrences of each term in the query
-        Iterator<String> it_q = query.terms.iterator();
-        while(it_q.hasNext()){
-            q = it_q.next();
-            if (!queryRecord.containsKey(q))
-                queryRecord.put(q, new Double(1));
-        }
-        //Map<String, Double> map = query.weights.iterator();
-        //for(Map.Entry<String, Double> entry : map.entrySet()){
+        for(String term : termsToConsider){
+            // Obtain idf of the term
+            documentFrequency_doc = Math.log(nDocs/new Double(this.idfMap.get(term)));
 
-        // Iterate over each query
-        it_q = query.terms.iterator();
-        while(it_q.hasNext()){
-            q = it_q.next();
-            postList = getPostings(q);
-            //w_query = query.weights.get(q);
-            //System.err.println("count: " + queryRecord.get(query.terms.get(i)));
-            //System.err.println("size: " + query.size());
-
-            w_query = queryRecord.get(q)/(new Double(query.size()));
-            //termFrequency_query = 1+ Math.log(termFrequency_query);
-            //documentFrequency_query = 1;//Math.log(nDocs/postList.size());
-            //w_query = termFrequency_query*documentFrequency_query;
-            // Ignote terms in query not appearing in collection
-            /*if (Double.isInfinite(idf)){
-                idf = 0;
-            }*/
-
-            /*System.err.println(q);
-            System.err.println("\t tf_q: " +termFrequency_query);
-            System.err.println("\t idf: " +documentFrequency_query);
-            System.err.println("\t tf*idf: " +termFrequency_query*documentFrequency_query);*/
-
-            // Iterate over each document
-            documentFrequency_doc = Math.log(nDocs/postList.size());
-            Iterator<PostingsEntry> it_d = postList.iterator();
+            // Obtain weight of the term
+            w_query_term = query.weights.get(term);
+            // Iterate over all documents containing the term and update the score(q,d)
+            Iterator<PostingsEntry> it_d = result.iterator();
             while(it_d.hasNext()){
                 postEnt = it_d.next();
-                termFrequency_doc = postEnt.positions.size();//
-                    //(new Double(this.docLengths.get(""+postEnt.docID)));
-                //termFrequency_doc = 1+ Math.log(termFrequency_doc);
-                w_doc =documentFrequency_doc*termFrequency_doc;
-                /*if (this.docIDs.get(""+postEnt.docID).equals("Zombie_Walk.f")){
-                    System.err.println("\n" + this.docIDs.get(""+postEnt.docID));
-                    System.err.println("\t idf = " + documentFrequency_doc);
-                    System.err.println("\t tf_d = " + termFrequency_doc);
-                    System.err.println("\t w_doc = " + w_doc);
-                    System.err.println("\t w_query*w_doc = " + w_query*w_doc);
-                }*/
-                //System.err.println("\n\t score = " + tf_q*idf*tf_d*idf);
-                //System.err.println("\t norm_d = " + (tf_d*idf)*(tf_d*idf));
-                result.insert(postEnt.docID, w_query*w_doc);
+                if (this.tfMap.get(postEnt.docID).containsKey(term)){
+                    termFrequency_doc = this.tfMap.get(postEnt.docID).get(term);
+                    w_doc_term = documentFrequency_doc*termFrequency_doc;
+                    postEnt.score += w_query_term*w_doc_term;
+                }
             }
         }
+        estimatedTime = (System.nanoTime() - startTime)/1000000;
+        System.err.println("* Building solution took: " + estimatedTime);
 
-        // TODO: Normalize the score of document d with the norm of the vector containing
-        // the tf-idf values of all the terms in document d.
-
+        /*
+         * 3) Normalize the scores
+         */
+        startTime = System.nanoTime();
         Iterator<PostingsEntry> it = result.iterator();
         while(it.hasNext()){
             postEnt = it.next();
-            /*if (this.docIDs.get(""+postEnt.docID).equals("Zombie_Walk.f")){
-                System.err.println("\n" + this.docIDs.get(""+postEnt.docID));
-                System.err.println("\t w = " + postEnt.score + "/"+
-                    (new Double(this.docLengths.get(""+postEnt.docID))));
-            }*/
             postEnt.score /= (new Double(this.docLengths.get(""+postEnt.docID)));//(Math.sqrt(postEnt.norm2));
-            /*if (this.docIDs.get(""+postEnt.docID).equals("Zombie_Walk.f")){
-                System.err.println("\t w = " + postEnt.score);
-            }*/
-
-            /*if (this.docIDs.get(""+postEnt.docID).equals("Davis.f")){
-                System.err.println(postEnt.docID + " corresponds to " + this.docIDs.get(""+postEnt.docID));
-            }*/
             postEnt.score = w * postEnt.score + (1-w) * quality(postEnt.docID);
         }
-        //System.err.println("Peta? --- "+titleToNumber.get("Davis.f"));
+        estimatedTime = (System.nanoTime() - startTime)/1000000;
+        System.err.println("* Normalizing took: " + estimatedTime);
+
+        /*
+         * 4) Sort the resulting solution
+         */
+        startTime = System.nanoTime();
         result.sort();
+        estimatedTime = (System.nanoTime() - startTime)/1000000;
+        System.err.println("* Sorting took: " + estimatedTime);
+
         return result;
     }
 
+
+    // Which terms should be considered? Based on Index elimination theory, idf-thresholding!
+    public Set<String> queryTermsConsidered(Query query, double idf_threshold){
+        double idf, nDocs = this.docIDs.size();
+        String term;
+
+        Set<String> termsToConsider = new HashSet<String>();
+
+        Iterator<String> it = query.terms.iterator();
+        while(it.hasNext()){
+            term = it.next();
+            idf = Math.log(nDocs/new Double(this.idfMap.get(term)));
+            if (idf >= idf_threshold){
+                termsToConsider.add(term);
+            }
+            /*else{
+                System.err.println(term + " not considered since idf = " + idf);
+            }*/
+        }
+
+        return termsToConsider;
+
+    }
 
     public double quality(int d){
         /*if (this.docIDs.get(""+d).equals("Davis.f"))
@@ -465,10 +382,35 @@ public class HashedIndex implements Index {
     public PostingsList union_query(Query query){
 
         PostingsList result = new PostingsList();//this.getPostings(query.terms.get(0));
+        String term;
+
+        /*for (int i = 0; i<query.size(); i++){
+            term = query.terms.get(i);
+            if (!this.getPostings(term).isEmpty()){
+                result = union_query(result, this.getPostings(query.terms.get(i)));
+            }
+        }*/
+
+        Iterator<String> it = query.terms.iterator();
+        while(it.hasNext()){
+            term = it.next();
+            if (!this.getPostings(term).isEmpty()){
+                result = union_query(result, this.getPostings(term));
+            }
+        }
+        //System.err.println("step 5");
+        return result;
+    }
+
+    public PostingsList union_query(Query query, Set<String> consider){
+
+        PostingsList result = new PostingsList();//this.getPostings(query.terms.get(0));
+        String term;
 
         for (int i = 0; i<query.size(); i++){
-            if (!this.getPostings(query.terms.get(i)).isEmpty()){
-                result = union_query(result, this.getPostings(query.terms.get(i)));
+            term = query.terms.get(i);
+            if (!this.getPostings(term).isEmpty() && consider.contains(term)){
+                result = union_query(result, this.getPostings(term));
             }
         }
         //System.err.println("step 5");
@@ -496,7 +438,7 @@ public class HashedIndex implements Index {
         while(it.hasNext()){
             p = it.next();
             if(!docs.contains(p.docID)){
-                union.insert(p.docID,0);
+                union.insert(p.docID, 0);
                 docs.add(p.docID);
             }
         }
