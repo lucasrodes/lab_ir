@@ -8,3 +8,8 @@ pdfbox
 gson
 classes/*
 others
+UUIDDemo
+dw
+files
+lib/javautil-3.1.1.jar
+run_search_engine.sh
