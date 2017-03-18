@@ -207,7 +207,8 @@ public class SearchGUI extends JFrame {
 
 	Action relevanceFeedbackSearch = new AbstractAction() {
 		public void actionPerformed( ActionEvent e ) {
-		    // Check that a ranked search has been made prior to the relevance feedback
+		    long startTime = System.nanoTime();
+            // Check that a ranked search has been made prior to the relevance feedback
 		    StringBuffer buf = new StringBuffer();
 		    if (( results != null ) && ( queryType == Index.RANKED_QUERY )) {
     			// Read user relevance feedback selections
@@ -224,8 +225,10 @@ public class SearchGUI extends JFrame {
     			synchronized ( indexLock ) {
     			    results = indexer.index.search( query, queryType, rankingType, structureType );
     			}
+                long estimatedTime = (System.nanoTime() - startTime)/1000000;
     			buf.append( "\nSearch after relevance feedback:\n" );
-    			buf.append( "\nFound " + results.size() + " matching document(s)\n\n" );
+    			buf.append( "\nFound " + results.size() + " matching document(s) in "
+                +estimatedTime+" milliseconds\n\n" );
     			for ( int i=0; i<results.size(); i++ ) {
     			    buf.append( " " + i + ". " );
     			    String filename = indexer.index.docIDs.get( "" + results.get(i).docID );

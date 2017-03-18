@@ -311,6 +311,50 @@ public class HashedIndex implements Index {
     }
 
 
+    public PostingsList ranked_query1(Query query, double w){
+        // w denotes how much we rely on tf-idf, should be small due to scale between tf-idf and
+        // pagerank
+
+        PostingsList result = this.union_query(query);//new PostingsList();
+        PostingsEntry postEnt = new PostingsEntry();
+
+        double nDocs = this.docIDs.size();
+        double w_query_term;
+        double termFrequency_doc, documentFrequency_doc, w_doc_term;
+
+        String term;
+
+
+        for(Map.Entry<String, Double> entry : query.weights.entrySet()){
+            term = entry.getKey();
+            w_query_term = entry.getValue();
+            documentFrequency_doc = Math.log(nDocs/new Double(this.idfMap.get(term)));
+            Iterator<PostingsEntry> it_d = result.iterator();
+            while(it_d.hasNext()){
+                postEnt = it_d.next();
+                if (this.tfMap.get(postEnt.docID).containsKey(term)){
+                    termFrequency_doc = this.tfMap.get(postEnt.docID).get(term);
+                    w_doc_term = documentFrequency_doc*termFrequency_doc;
+                    postEnt.score += w_query_term*w_doc_term;
+                }
+            }
+        }
+
+        // TODO: Normalize the score of document d with the norm of the vector containing
+        // the tf-idf values of all the terms in document d.
+
+        Iterator<PostingsEntry> it = result.iterator();
+        while(it.hasNext()){
+            postEnt = it.next();
+            postEnt.score /= (new Double(this.docLengths.get(""+postEnt.docID)));//(Math.sqrt(postEnt.norm2));
+            postEnt.score = w * postEnt.score + (1-w) * quality(postEnt.docID);
+        }
+
+        result.sort();
+        return result;
+    }
+
+
     public PostingsList ranked_query2(Query query, double w){
         // w denotes how much we rely on tf-idf
 
