@@ -1,10 +1,10 @@
-/*  
+/*
  *   This file is part of the computer assignment for the
  *   Information Retrieval course at KTH.
- * 
+ *
  *   First version:  Johan Boye, 2010
  *   Second version: Johan Boye, 2012
- */  
+ */
 
 package ir;
 
@@ -15,10 +15,11 @@ import java.io.Serializable;
  *   A list of postings for a given word.
  */
 public class PostingsList implements Serializable, Cloneable {
-    
+
     /** The postings list as a linked list. */
     private LinkedList<PostingsEntry> list = new LinkedList<PostingsEntry>();
     private Map<Integer, Integer> checkList = new HashMap<Integer, Integer>();
+    //public Map<Integer, Integer> docIDToIndex = new HashMap<Integer, Integer>();
 
     public PostingsList(){}
 
@@ -52,7 +53,7 @@ public class PostingsList implements Serializable, Cloneable {
 
 
     /** [NEW]
-     *  Add new posting Corresponding to docID 
+     *  Add new posting Corresponding to docID
      */
     public void insert(int docID){
         this.list.add(new PostingsEntry(docID, 0));
@@ -60,19 +61,22 @@ public class PostingsList implements Serializable, Cloneable {
 
 
     /** [NEW]
-     *  Corresponding to docID and its corresponding positional index pos 
+     *  Corresponding to docID and its corresponding positional index pos
      */
     public void insert(int docID, int pos){
         /* Check if the list of postings is empty or there is no entry
            for docID in the list. Add new postingsentry with (docID, pos). */
-        if (this.isEmpty()||this.getLast().docID != docID)
+        if (this.isEmpty()||this.getLast().docID != docID){
             this.list.add(new PostingsEntry(docID, 0, pos));
+            //this.docIDToIndex.put(docID, this.list.size()-1);
+        }
         else
             this.getLast().insertPosition(pos);
+
     }
 
     /** [NEW]
-     *  Corresponding to docID and its corresponding positional index pos 
+     *  Corresponding to docID and its corresponding positional index pos
      */
     public void insert(int docID, double sc){
         // If docID is in the list
@@ -87,6 +91,7 @@ public class PostingsList implements Serializable, Cloneable {
         }
     }
 
+
     public Iterator<PostingsEntry> iterator(){
         return this.list.iterator();
     }
@@ -95,9 +100,9 @@ public class PostingsList implements Serializable, Cloneable {
     public void sort(){
         Collections.sort(list);
     }
-    
+
     /** [NEW]
-     *  
+     *
      */
     public String toString(){
 
@@ -125,6 +130,6 @@ public class PostingsList implements Serializable, Cloneable {
 
 
 }
-	
 
-			   
+
+
