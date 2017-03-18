@@ -1,9 +1,9 @@
-/*  
+/*
  *   This file is part of the computer assignment for the
  *   Information Retrieval course at KTH.
- * 
+ *
  *   First version:  Johan Boye, 2012
- */  
+ */
 
 import java.util.*;
 import java.io.*;
@@ -12,7 +12,7 @@ import com.google.gson.reflect.TypeToken;
 
 public class PageRank{
 
-    /**  
+    /**
      *   Maximal number of documents. We're assuming here that we
      *   don't have more docs than we can keep in main memory.
      */
@@ -30,22 +30,22 @@ public class PageRank{
      */
     String[] docName = new String[MAX_NUMBER_OF_DOCS];
 
-    /**  
+    /**
      *   A memory-efficient representation of the transition matrix.
-     *   The outlinks are represented as a Hashtable, whose keys are 
+     *   The outlinks are represented as a Hashtable, whose keys are
      *   the numbers of the documents linked from.<p>
      *
-     *   The value corresponding to key i is a Hashtable whose keys are 
+     *   The value corresponding to key i is a Hashtable whose keys are
      *   all the numbers of documents j that i links to.<p>
      *
-     *   If there are no outlinks from i, then the value corresponding 
+     *   If there are no outlinks from i, then the value corresponding
      *   key i is null.
      */
     Hashtable<Integer,Hashtable<Integer,Boolean>> link = new Hashtable<Integer,Hashtable<Integer,Boolean>>();
 
     /**
      * Page rank scores of each document
-     */ 
+     */
     double[] pageRank = new double[MAX_NUMBER_OF_DOCS];
 
     /**
@@ -65,7 +65,7 @@ public class PageRank{
     final static double BORED = 0.15;
 
     /**
-     *   Convergence criterion: Transition probabilities do not 
+     *   Convergence criterion: Transition probabilities do not
      *   change more that EPSILON from one iteration to another.
      */
     final static double EPSILON = 0.00001;
@@ -76,7 +76,7 @@ public class PageRank{
      */
     final static int MAX_NUMBER_OF_ITERATIONS = 1000;
 
-    
+
     /* --------------------------------------------- */
 
 
@@ -93,8 +93,8 @@ public class PageRank{
 
 
     /**
-     *   Reads the documents and creates the docs table. When this method 
-     *   finishes executing then the @code{out} vector of outlinks is 
+     *   Reads the documents and creates the docs table. When this method
+     *   finishes executing then the @code{out} vector of outlinks is
      *   initialised for each doc, and the @code{p} matrix is filled with
      *   zeroes (that indicate direct links) and NO_LINK (if there is no
      *   direct link. <p>
@@ -107,13 +107,13 @@ public class PageRank{
     	    System.err.print( "Reading file... " );
     	    BufferedReader in = new BufferedReader( new FileReader( filename ));
     	    String line;
-    	    while ((line = in.readLine()) != null && fileIndex<MAX_NUMBER_OF_DOCS ) 
+    	    while ((line = in.readLine()) != null && fileIndex<MAX_NUMBER_OF_DOCS )
             {
         		int index = line.indexOf( ";" );
         		String title = line.substring( 0, index );
         		Integer fromdoc = docNumber.get( title );
         		//  Have we seen this document before?
-        		if ( fromdoc == null ) {	
+        		if ( fromdoc == null ) {
         		    // This is a previously unseen doc, so add it to the table.
         		    fromdoc = fileIndex++;
         		    docNumber.put( title, fromdoc );
@@ -121,7 +121,7 @@ public class PageRank{
         		}
         		// Check all outlinks.
         		StringTokenizer tok = new StringTokenizer( line.substring(index+1), "," );
-        		while ( tok.hasMoreTokens() && fileIndex<MAX_NUMBER_OF_DOCS ) 
+        		while ( tok.hasMoreTokens() && fileIndex<MAX_NUMBER_OF_DOCS )
                 {
         		    String otherTitle = tok.nextToken();
         		    Integer otherDoc = docNumber.get( otherTitle );
@@ -175,7 +175,7 @@ public class PageRank{
             System.err.println( "Reading titles... " );
             BufferedReader in = new BufferedReader( new FileReader( filename ));
             String line;
-            while ((line = in.readLine()) != null && fileIndex<MAX_NUMBER_OF_DOCS ) 
+            while ((line = in.readLine()) != null && fileIndex<MAX_NUMBER_OF_DOCS )
             {
                 String[] string = line.split(";");
                 Integer number = Integer.parseInt(string[0]);//line.indexOf( ";" );
@@ -203,7 +203,7 @@ public class PageRank{
                         break;
             case 2: monteCarlo2(numberOfDocs, parameter);
                         break;
-            case 3: monteCarlo3(numberOfDocs, parameter);    
+            case 3: monteCarlo3(numberOfDocs, parameter);
                         break;
             case 4: monteCarlo4(numberOfDocs, parameter);
                         break;
@@ -218,7 +218,7 @@ public class PageRank{
     //   YOUR CODE HERE
     //
         long startTime = System.currentTimeMillis();
-        
+
         // Initialize pageRank with uniform probability
         for (int i = 0; i < numberOfDocs; i++){
             pageRank[i] = 1.0/numberOfDocs; // randomly set
@@ -232,9 +232,9 @@ public class PageRank{
         int iterations = 0;
         double incrementProb = EPSILON+1;
 
-        while (iterations < MAX_NUMBER_OF_ITERATIONS && 
+        while (iterations < MAX_NUMBER_OF_ITERATIONS &&
             incrementProb > EPSILON){
-            double[] newPageRank = new double[numberOfDocs];  
+            double[] newPageRank = new double[numberOfDocs];
 
             // Summation of all the ranks
             double sum = 0;
@@ -247,7 +247,7 @@ public class PageRank{
             // Base value for newPageRank vector
             for (int i = 0; i < numberOfDocs; i++){
                 // Matrix J
-                newPageRank[i] = BORED/(double)numberOfDocs;  
+                newPageRank[i] = BORED/(double)numberOfDocs;
                 // Matrix P (when state has no links to other states, we
                 // allow the surfer to go to any state with uniform probability)
                 newPageRank[i] += (1.0-BORED)*((double)sum/(double)numberOfDocs);
@@ -269,19 +269,19 @@ public class PageRank{
             incrementProb = 0.0;
             for (int i = 0; i < numberOfDocs; i++){
                 incrementProb = Math.max(Math.abs(pageRank[i]-
-                    newPageRank[i]), incrementProb);    
+                    newPageRank[i]), incrementProb);
             }
 
             // Increment number of iterations
             iterations++;
-            
+
             // Update new page rank vector
             pageRank = newPageRank;
 
             //System.err.println(iterations);
             //System.err.println(incrementProb);
         }
-       
+
         long estimatedTime = System.currentTimeMillis() - startTime;
         // System.out.println("elapsed time: "+ estimatedTime/1000.0+"s");
         return pageRank;
@@ -298,13 +298,16 @@ public class PageRank{
             }
     }
 
-
+    /* Simulate N runs of the random walk initiated at randomly chosen pages.
+     * At the end the probabilities are obtained by dividing
+     * (#walks which end at j)/N
+     */
     void monteCarlo1(int numberOfDocs, int numberOfWalks){
         Random rand = new Random(System.currentTimeMillis());
         int id;
 
         for (int n = 0; n < numberOfWalks; n++){
-            
+
             // Run random walk n
             id = rand.nextInt(numberOfDocs);
             while(rand.nextDouble() > BORED){
@@ -326,6 +329,10 @@ public class PageRank{
     }
 
 
+    /* Simulate N=mn runs of the random walk initiated at each page exactly
+     * m times. At the end the probabilities are obtained by dividing
+     * (#walks which end at j)/N
+     */
     void monteCarlo2(int numberOfDocs, int iterations){
         Random rand = new Random(System.currentTimeMillis());
         int id;
@@ -353,6 +360,10 @@ public class PageRank{
     }
 
 
+    /* Simulate N runs of the random walk initiated at each page m times.
+     * At the end the probabilities are obtained by dividing
+     * (#visits to node j during walks)/N
+     */
     void monteCarlo3(int numberOfDocs, int iterations){
         Random rand = new Random(System.currentTimeMillis());
         int id;
@@ -380,6 +391,11 @@ public class PageRank{
     }
 
 
+    /* Simulate N=mn runs of the random walk initiated at each page m times
+     * and stopping when it reaches a dangling node.
+     * At the end the probabilities are obtained by dividing
+     * (#visits to node j during walks)/N
+     */
     void monteCarlo4(int numberOfDocs, int iterations){
         Random rand = new Random(System.currentTimeMillis());
         int id;
@@ -406,14 +422,17 @@ public class PageRank{
         normalize();
     }
 
-
+    /* Simulate N runs of the random walk initiated at randomly chosen pages.
+     * At the end the probabilities are obtained by dividing
+     * (#visits to node j during walks)/N
+     */
     void monteCarlo5(int numberOfDocs, int numberOfWalks){
         Random rand = new Random(System.currentTimeMillis());
         int id;
 
         for (int n = 0; n < numberOfWalks; n++){
-            
-            // Run random walk n
+
+            // Initiate at random page
             id = rand.nextInt(numberOfDocs);
             while(rand.nextDouble() > BORED){
                 pageRank[id]++;
@@ -507,7 +526,7 @@ public class PageRank{
     }
 
     /** [NEW]
-     * Saves object "o" as a JSON file called fileName 
+     * Saves object "o" as a JSON file called fileName
      */
     public void saveJSON(String fileName, Object o){
         // System.err.println("accessing disk");
@@ -539,7 +558,7 @@ public class PageRank{
     }
 
     /* --------------------------------------------- */
-   
+
     public static void main( String[] args ) {
 	if ( args.length != 1 ) {
 	    System.err.println( "Please give the name of the link file" );
@@ -552,14 +571,14 @@ public class PageRank{
         worst = p1.worstResults(30, true);
 
         PageRank p2 = new PageRank( args[0], 5, 10000000 );
-        
+
         System.err.println("*---------------*");
-        System.err.println("BEEEST");    
+        System.err.println("BEEEST");
         p2.bestResults(30, true);
-        double error = p2.euclideanDistance(best); 
+        double error = p2.euclideanDistance(best);
         System.err.println("Error best = " + error);
         System.err.println("*---------------*");
-        System.err.println("WOOORST"); 
+        System.err.println("WOOORST");
         p2.worstResults(30, true);
         error = p2.euclideanDistance(worst);
         System.err.println("Error worst = " + error);

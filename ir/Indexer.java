@@ -1,11 +1,11 @@
-/*  
+/*
  *   This file is part of the computer assignment for the
  *   Information Retrieval course at KTH.
- * 
+ *
  *   First version:  Johan Boye, 2010
  *   Second version: Johan Boye, 2012
  *   Third version:  Johan Boye, 2016
- */  
+ */
 
 package ir;
 
@@ -25,7 +25,7 @@ public class Indexer {
 
     /** The index to be built up by this indexer. */
     public HashedIndex index = new HashedIndex();
-    
+
     /** The next docID to be generated. */
     private int lastDocID = 0;
 
@@ -69,12 +69,12 @@ public class Indexer {
 			//System.err.println( "Indexing " + f.getPath() );
 			// First register the document and get a docID
 			int docID = generateDocID();
-			if ( docID%1000 == 0 ) 
+			if ( docID%1000 == 0 )
 				System.err.println( "Indexed " + docID + " files" );
 			index.docIDs.put( "" + docID, f.getName() );
 			try {
-			    //  Read the first few bytes of the file to see if it is 
-			    // likely to be a PDF 
+			    //  Read the first few bytes of the file to see if it is
+			    // likely to be a PDF
 			    Reader reader = new InputStreamReader( new FileInputStream(f), StandardCharsets.UTF_8 );
 			    char[] buf = new char[4];
 			    reader.read( buf, 0, 4 );
@@ -110,7 +110,7 @@ public class Indexer {
 		}
     }
 
-    
+
     /* ----------------------------------------------- */
 
 
@@ -119,12 +119,12 @@ public class Indexer {
      */
     public String extractPDFContents( File f ) throws IOException {
 		FileInputStream fi = new FileInputStream( f );
-		PDFParser parser = new PDFParser( fi );   
-		parser.parse();   
+		PDFParser parser = new PDFParser( fi );
+		parser.parse();
 		fi.close();
-		COSDocument cd = parser.getDocument();   
-		PDFTextStripper stripper = new PDFTextStripper();   
-		String result = stripper.getText( new PDDocument( cd ));  
+		COSDocument cd = parser.getDocument();
+		PDFTextStripper stripper = new PDFTextStripper();
+		String result = stripper.getText( new PDDocument( cd ));
 		cd.close();
 		return result;
     }
@@ -138,7 +138,7 @@ public class Indexer {
      *  offset.
      */
     public void insertIntoIndex( String token, int docID,  int offset ) {
-	index.insert( token, docID, offset );
+    	index.insert( token, docID, offset );
     }
 }
-	
+
