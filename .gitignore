@@ -6,6 +6,5 @@ postings
 irs
 pdfbox
 gson
-
-classes
+classes/*
 others
