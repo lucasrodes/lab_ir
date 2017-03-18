@@ -22,4 +22,40 @@ Note that, in general, the document tf-idf vectors, i.e. _**dj**_, usually conta
 test queries: *graduate program mathematics*
 
 ## Task 3.3: Speeding Up the Search Engine
+For speeding up the search, I have decided to follow the approach 1). This focuses on only considering terms with idf above a certain threshold. So one question arises: How do we set the threshold? Find below some **key points**
 
+- Since our collection contains approximately 17k elements, we have that the idf will be, at most, ln(17000) = 9.7.
+- If a word appears in all documents, its idf is 0.
+
+With this in mind, we can conclude that: 0< idf-threshold<4  (approximately). I have worked with idf_threshold= 1.
+
+**Results**
+
+I performed a test comparing the time needed to retrieve the result depending on the idf-threshold
+value. I did two experiments. In the first one, I always selected the file "Zombie_Walk.f" as relevant
+and in the second both "Zombie_Walk.f" and "Kearney_Hall.f" were selected as relevant.
+
+* Experiment 1.
+
+Threshold | Number of retrieved files | Time needed (ms) |
+----------|:-------------------------:|------------------:
+0         | 16030                     | [2103, 2957]     |
+1         | 14485                     | [1667, 2076]     |
+2         | 12375                     | [1133, 1354]     |
+3         | 7473                      | [536, 654]       |
+4         | 3371                      | [182, 378]       |
+5         | 1286                      | [66, 121]        |
+6         | 373                       | [26, 34]         |
+
+* Experiment 2.
+
+Threshold | Number of retrieved files | Time needed (ms) |
+----------|:-------------------------:|------------------:
+0         | 16160                     | [2787, 3249]     |
+1         | 15106                     | [2380, 2657]     |
+3         | 9104                      | [871, 1211]      |
+4         | 6313                      | [503, 726]       |
+5         | 1432                      | [72, 82]         |
+6         | 373                       | [31, 37]         |
+
+The higher is the idf-threshold, the more terms we ignore. Thus we retrieve less documents and the search is faster. At the end, to high threshold will lead to zero retrieved documents. Looking at the results and the performance, I decided to set idf-threshold = 4.
