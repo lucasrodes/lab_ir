@@ -1,1 +1,0 @@
-Reads and writes for every token, using GSON.

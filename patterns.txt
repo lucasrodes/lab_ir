@@ -14,7 +14,7 @@
 // Composed words (e.g. miss-classified-stuff)
 ([a-z]+-)+[a-z]+
 
-// Clitics (e.g. she's, 'em, etc.) 
+// Clitics (e.g. she's, 'em, etc.)
 [a-z]*'[a-z]+$
 
 // Links
