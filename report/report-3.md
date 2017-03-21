@@ -194,6 +194,8 @@ Raja%27s_Tandoor                        | 0,00396 | 2           |
 Ding_How                                | 0,00361 | 2           |
 
 
+### Conclusions
+
 * We note that the set of documents retrieved is the same as if we use Unigram and Phrase Query (Assignment 1).
 
 
