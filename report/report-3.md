@@ -88,7 +88,7 @@ In summary, bigrams could now be seen as the tokens.
 Let us now compare the performance using the BIGRAM and UNIGRAM text structure models for three different queries.
 
 
-> Query 'zombie attack'
+### Query 'zombie attack'
 
 * Unigram
 
@@ -126,7 +126,7 @@ Zombie_Attack_Response_Guide    | 0,11487| 1            |
 Explore                         | 0,11297| 0            |
 
 
-> Query 'money transfer'
+### Query 'money transfer'
 
 * Unigram
 
@@ -141,7 +141,7 @@ Transfer_Student_Services    | 0,59727 | 0                              |
 NicoleBush                   | 0,47560 | 0                              |
 Anthony_Swofford             | 0,33572 | 0                              |
 Title_Companies              | 0,32926 | 1                              |
-Transfer_Student_Association | 0,28222 | Transfer_Student_Association   |
+Transfer_Student_Association | 0,28222 | 0                              |
 NinadelRosario               | 0,23137 | 0                              |
 AnthonyParisi                | 0,22829 | 0                              |
 
@@ -155,44 +155,46 @@ Wells_Fargo_Controversy         | 0,32177 | 1           |
 Selisa_Romero                   | 0,16574 | 0           |
 
 
-> Query 'vegans are healthier'
+
+
+### Query 'vegan food health'
 
 * Unigram
 
-_Found 13043 matching document(s) in 59 milliseconds_
+_Found 1968 matching document(s) in 13 milliseconds_
 
 Document                        | Score   | Relevance |
 --------------------------------|:-------:|-----------:
-Doughnut_the_Cat                | 0,67971 | 0         |
-Bella                           | 0,54377 | 0         |
-VietNguyen                      | 0,47409 | 0         |
-Cute_Animals                    | 0,25894 | 0         |
-Windmill_Feed                   | 0,23892 | 0         |
-5                               | 0,19947 | 0         |
-Mike_Teglas                     | 0,19420 | 0         |
-Picnic_Day_1924                 | 0,16478 | 0         |
-Marcus_Shellshock               | 0,15993 | 0         |
-WesHough                        | 0,14385 | 0         |
-
-
+Butterfly_Bakery                | 2,69491 | 1         |
+Butterfly_Vegan                 | 2,02118 | 1         |
+Indian                          | 0,56245 | 0         |
+Davis_Food_Coop                 | 0,42183 | 0         |
+Food_Science                    | 0,42183 | 0         |
+Hometown_Chinese_Restaurant     | 0,42183 | 0         |
+Hometown_Restaurant             | 0,42183 | 0         |
+Thai_2k                         | 0,42183 | 0         |
+The_Co-Op                       | 0,42183 | 0         |
+NicoletteD                      | 0,35932 | 1         |
 
 * Bigram
 
-_Found 27 matching document(s) in 1 milliseconds_
+_Found 12 matching document(s) in 0 milliseconds_
 
-Document                        | Score   | Relevance |
---------------------------------|:-------:|-----------:
-Nutritional_Yeast               |  | |
-Chinese_tallowtree              |  | |
-Pig_Day                         |  | |
-27                              |  | |
-Disaster_Planning_for_Pets      |  | |
-Politics_%26_Pancakes           |  | |
-Climate_Change                  |  | |
-Yolo_County_Fair                |  | |
-Ladybugs                        |  | |
-Glide_Ranch                     |  | |
-
+Document                                | Score   | Relevance   |
+----------------------------------------|:-------:|-------------:
+MariahMontanez                          | 0,22848 | 3           |
+BonnieStewart                           | 0,12786 | 1           |
+Food                                    | 0,08472 | 1           |
+AsmaMaryamMohseni                       | 0,07941 | 1           |
+Vegan                                   | 0,01289 | 3           |
+Vegetarian_Options                      | 0,00841 | 3           |
+Whole_Foods_Market                      | 0,00771 | 3           |
+Boycott%2C_Divestment%2C_And_Sanctions  | 0,00523 | 0           |
+Raja%27s_Tandoor                        | 0,00396 | 2           |
+Ding_How                                | 0,00361 | 2           |
 
 
 * We note that the set of documents retrieved is the same as if we use Unigram and Phrase Query (Assignment 1).
+
+
+TODO: Plot graphs + comment them
