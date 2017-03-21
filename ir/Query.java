@@ -17,6 +17,8 @@ public class Query {
     public Map<String, Double> weights = new HashMap<String, Double>();
 
     public double query_size = 0;
+    public int nDocs = 0;
+
     /**
      *  Creates a new empty Query
      */
@@ -26,10 +28,12 @@ public class Query {
     /**
      *  Creates a new Query from a string of words
      */
-    public Query( String queryString  ) {
+    public Query( String queryString, Indexer indexer  ) {
         double termFrequency_query_term, documentFrequency_query_term, w_query_term;
     	String query_term;
         StringTokenizer tok = new StringTokenizer( queryString );
+        Map<String, Integer> idfmap = indexer.index.idfMap;
+        this.nDocs = indexer.index.docIDs.size();
 
     	while ( tok.hasMoreTokens() ) {
             // Obtain query term
@@ -46,7 +50,9 @@ public class Query {
     	}
 
         for(Map.Entry<String, Double> entry : weights.entrySet()){
-            this.weights.put(entry.getKey(), entry.getValue() / this.size());
+            String key = entry.getKey();
+            double idf = Math.log(nDocs/new Double(idfmap.get(key)));
+            this.weights.put(key, idf*entry.getValue() / this.size());
         }
 
         this.query_size = new Double(this.size());
@@ -93,11 +99,16 @@ public class Query {
                 dr++;
                 //System.err.println("* " + indexer.index.docIDs.get( "" + results.get(i).docID ));
                 // Build vector of this document
-                Map<String, Integer> map = indexer.index.tfMap.get(results.get(i).docID);
+                // Obtain tf values of terms in i:th document
+                Map<String, Integer> tfmap = indexer.index.tfMap.get(results.get(i).docID);
+                // Obtain length of i:th document
                 Double len = new Double(indexer.index.docLengths.get( "" + results.get(i).docID));
-                for(Map.Entry<String, Integer> entry : map.entrySet()){
+                for(Map.Entry<String, Integer> entry : tfmap.entrySet()){
+                    // Get term in i:th document and obtain
                     String key = entry.getKey();
-                    Double value = (new Double(entry.getValue()))/len;
+                    // Obtain normalized tf value * idf
+                    double idf = Math.log(this.nDocs/new Double(indexer.index.idfMap.get(key)));
+                    Double value = idf*(new Double(entry.getValue()))/len;
                     if (centroid_weights.containsKey(key))
                         centroid_weights.put(key, centroid_weights.get(key)+value);
                     else

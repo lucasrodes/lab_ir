@@ -165,7 +165,7 @@ public class SearchGUI extends JFrame {
 		    // Turn the search string and into a Query
 		    long startTime = System.nanoTime();
 		    String queryString = queryWindow.getText().toLowerCase().trim();
-		    query = new Query( queryString );
+		    query = new Query( queryString, indexer );
 		    // Search and print results. Access to the index is synchronized since
 		    // we don't want to search at the same time we're indexing new files
 		    // (this might corrupt the index).

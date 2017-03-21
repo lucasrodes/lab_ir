@@ -22,7 +22,16 @@ Note that, in general, the document tf-idf vectors, i.e. _**dj**_, usually conta
 
 ## Task 3.2: Designing an evaluation
 
-test queries: *graduate program mathematics*
+As in previous assignments, we use the test query: *graduate program mathematics*
+
+In this regard the experiment will be as following:
+
+1. Search for the specified query
+2. Select as relevant documents the ones labeled as relevant in the previous assesments.
+3. Repeat 1 and 2 for a while
+4. Check the precission and recall after some iterations and check if the performance improved. That is, check if both recall and precision were increased.
+
+**Note that we consider as ground truth the relevance assesment done by myself in previous assignments.**
 
 ## Task 3.3: Speeding Up the Search Engine
 For speeding up the search, I have decided to follow the approach 1). This focuses on only considering terms with idf above a certain threshold. So one question arises: How do we set the threshold? Find below some **key points**
