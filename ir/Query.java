@@ -15,6 +15,7 @@ public class Query {
 
     public LinkedList<String> terms = new LinkedList<String>();
     public Map<String, Double> weights = new HashMap<String, Double>();
+    public Map<String, Double> bigramWeights = new HashMap<String, Double>();
 
     public double query_size = 0;
     public int nDocs = 0;
@@ -30,14 +31,15 @@ public class Query {
      */
     public Query( String queryString, Indexer indexer  ) {
         double termFrequency_query_term, documentFrequency_query_term, w_query_term;
-    	String query_term;
+    	String query_term, bigram, last_term = null;
         StringTokenizer tok = new StringTokenizer( queryString );
         Map<String, Integer> idfmap = indexer.index.idfMap;
-        this.nDocs = indexer.index.docIDs.size();
+        this.nDocs = indexer.index.getNumberDocs();
 
     	while ( tok.hasMoreTokens() ) {
             // Obtain query term
             query_term = tok.nextToken();
+
     	    this.terms.add( query_term );
 
             // Add the query term to the map with its corresponding tf-idf value
@@ -47,13 +49,55 @@ public class Query {
             else
                 this.weights.put( query_term, new Double(1) );
 
+            // Add bigram weights
+            if (last_term != null){
+                bigram = last_term + " " +query_term;
+                System.err.println("- Adding: ''" + bigram +"''");
+                // Add the query term to the map with its corresponding tf-idf value
+                if (this.bigramWeights.containsKey(bigram)){
+                    this.bigramWeights.put( bigram, this.bigramWeights.get( bigram ) + 1 );
+                    System.err.println("   - Already contained, updating tf");
+                }
+                else{
+                    this.bigramWeights.put( bigram, new Double(1) );
+                    System.err.println("   - New bigram added");
+                }
+                System.err.println("  ... Correctly added!");
+            }
+
+            last_term = query_term;
     	}
 
+        // Normalize weights of terms
+        double idf;
         for(Map.Entry<String, Double> entry : weights.entrySet()){
             String key = entry.getKey();
-            double idf = Math.log(nDocs/new Double(idfmap.get(key)));
+            idf = 0;
+            if(idfmap.containsKey(key))
+                idf = Math.log(nDocs/new Double(idfmap.get(key)));
+
             this.weights.put(key, idf*entry.getValue() / this.size());
         }
+
+        System.err.println("- Normalizing the bigram weights!");
+        // Normalize weights of bigrams
+        for(Map.Entry<String, Double> entry : bigramWeights.entrySet()){
+            String key = entry.getKey();
+            System.err.println("   - Bigram ''" + key + "''");
+            idf = 0;
+            if(idfmap.containsKey(key))
+                idf = Math.log(nDocs/new Double(idfmap.get(key)));
+            System.err.println("      - idf computed");
+            this.bigramWeights.put(key, idf*entry.getValue()/ (this.size()-1));
+            System.err.println("   ... Bigram correctly normalized!");
+        }
+        System.err.println("  ... Correctly normalized!");
+
+        /*for(Map.Entry<String, Double> entry : bigramWeights.entrySet()){
+            String key = entry.getKey();
+            System.err.println("Bigram '" + key +"' with weight " + entry.getValue());
+        }*/
+
 
         this.query_size = new Double(this.size());
     }
@@ -102,7 +146,7 @@ public class Query {
                 // Obtain tf values of terms in i:th document
                 Map<String, Integer> tfmap = indexer.index.tfMap.get(results.get(i).docID);
                 // Obtain length of i:th document
-                Double len = new Double(indexer.index.docLengths.get( "" + results.get(i).docID));
+                Double len = new Double(indexer.index.getDocLength(results.get(i).docID));
                 for(Map.Entry<String, Integer> entry : tfmap.entrySet()){
                     // Get term in i:th document and obtain
                     String key = entry.getKey();

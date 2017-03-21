@@ -28,9 +28,9 @@ public class HashedIndex implements Index {
     // NEW IN TASK 3
     // Map mapping a docID to the set of terms appearing in it. In particular it mapps to a
     // map which maps term to number of appearences
-    public Map<Integer, HashMap<String, Integer>> tfMap
-            = new TreeMap<Integer, HashMap<String, Integer>>();
-    public Map<String, Integer> idfMap = new HashMap<String, Integer>();
+    //public Map<Integer, HashMap<String, Integer>> tfMap
+    //        = new TreeMap<Integer, HashMap<String, Integer>>();
+    // public Map<String, Integer> idfMap = new HashMap<String, Integer>();
 
     /* [MODIFIED] Maps indices to document names */
     public Map<String, String> docIDs = new HashMap<String,String>();
@@ -70,6 +70,8 @@ public class HashedIndex implements Index {
      */
     public void insert( String token, int docID, int offset ) {
         // Add to map of postingslist
+        //if (docID % 100 == 0)
+            //System.err.println("Trying to insert ''" + token + "'' found in doc "+docID);
         if (this.index.containsKey(token)){
             //System.err.println(token+" already in memory");
             this.index.get(token).insert(docID, offset);
@@ -238,7 +240,8 @@ public class HashedIndex implements Index {
      */
     public PostingsList search( Query query, int queryType, int rankingType,
         int structureType ) {
-        double idf_threshold = new Double(4);
+        double idf_threshold = new Double(0);
+        double index_elimination = new Double(0.008);
         // System.err.println(pageRank[docNumber.get("121")]);
 
         if (query.size()>0){
@@ -254,7 +257,7 @@ public class HashedIndex implements Index {
                     switch(rankingType){
                         case Index.TF_IDF: return ranked_query(query, 1, idf_threshold);
                         case Index.PAGERANK: return ranked_query(query, 0, idf_threshold);//ranked_query(query, 0, idf_threshold);//ranked_query2(query, 0);
-                        case Index.COMBINATION: return ranked_query(query, 0.005, idf_threshold);
+                        case Index.COMBINATION: return ranked_query(query, index_elimination, idf_threshold);
                     }
                 default:
                     System.out.println("not valid query");
@@ -355,7 +358,9 @@ public class HashedIndex implements Index {
         Iterator<String> it = query.terms.iterator();
         while(it.hasNext()){
             term = it.next();
-            idf = Math.log(nDocs/new Double(this.idfMap.get(term)));
+            idf = -1;
+            if(this.idfMap.containsKey(term))
+                idf = Math.log(nDocs/new Double(this.idfMap.get(term)));
             if (idf >= idf_threshold){
                 termsToConsider.add(term);
             }
@@ -740,5 +745,27 @@ public class HashedIndex implements Index {
         }
         return s;//this.indexInMemory.toString();
     }
+
+    public int getDocLength(int id){
+        return this.docLengths.get( "" + id);
+    }
+
+    public void putDocLength(int id, int offset){
+        this.docLengths.put( "" + id, offset);
+    }
+
+    public int getNumberDocs(){
+        return this.docIDs.size();
+    }
+
+    public void putdDocID( int id, String filename ){
+        this.docIDs.put( "" + id, filename );
+    }
+
+    public String getDocName ( int id ){
+        return this.docIDs.get( "" + id );
+    }
+
+    public void setParameters(HashedIndex i){}
 
 }

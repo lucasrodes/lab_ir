@@ -165,13 +165,19 @@ public class SearchGUI extends JFrame {
 		    // Turn the search string and into a Query
 		    long startTime = System.nanoTime();
 		    String queryString = queryWindow.getText().toLowerCase().trim();
-		    query = new Query( queryString, indexer );
+		    System.err.println("------------------");
+            query = new Query( queryString, indexer );
 		    // Search and print results. Access to the index is synchronized since
 		    // we don't want to search at the same time we're indexing new files
 		    // (this might corrupt the index).
 		    synchronized ( indexLock ) {
-				results = indexer.index.search( query, queryType, rankingType, structureType );
-		    }
+				if (structureType == Index.UNIGRAM)
+                    results = indexer.index.search( query, queryType, rankingType, structureType );
+                else if (structureType == Index.BIGRAM){
+                    System.err.println("Bigram - mode");
+                    results = indexer.biwordIndex.search( query, queryType, rankingType, structureType );
+		        }
+            }
 		    long estimatedTime = (System.nanoTime() - startTime)/1000000;
 		    StringBuffer buf = new StringBuffer();
 		    if ( results != null ) {
@@ -180,7 +186,7 @@ public class SearchGUI extends JFrame {
 			for ( int i=0; i<results.size(); i++ ) {
 			    buf.append( "");
 			    buf.append( " " + i + "." );
-			    String filename = indexer.index.docIDs.get( "" + results.get(i).docID );
+                String filename = indexer.index.getDocName(results.get(i).docID );
 			    if ( filename == null ) {
 					buf.append( "" + results.get(i).docID );
 			    }
@@ -231,7 +237,7 @@ public class SearchGUI extends JFrame {
                 +estimatedTime+" milliseconds\n\n" );
     			for ( int i=0; i<results.size(); i++ ) {
     			    buf.append( " " + i + ". " );
-    			    String filename = indexer.index.docIDs.get( "" + results.get(i).docID );
+    			    String filename = indexer.index.getDocName(results.get(i).docID );
     			    if ( filename == null ) {
     				buf.append( "" + results.get(i).docID );
     			    }
@@ -353,6 +359,7 @@ public class SearchGUI extends JFrame {
 			File dokDir = new File( dirNames.get( i ));
 			indexer.processFiles( dokDir );
 	    }
+        indexer.biwordIndex.setParameters((HashedIndex)indexer.index);
 	    //indexer.index.cleanup();
 	    // Store index
 	    //this.indexer.index.saveAll();

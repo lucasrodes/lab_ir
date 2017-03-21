@@ -24,7 +24,9 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 public class Indexer {
 
     /** The index to be built up by this indexer. */
-    public HashedIndex index = new HashedIndex();
+    public Index index = new HashedIndex();
+    public Index biwordIndex = new BiwordIndex();
+    // RETHINK UP
 
     /** The next docID to be generated. */
     private int lastDocID = 0;
@@ -71,7 +73,7 @@ public class Indexer {
 			int docID = generateDocID();
 			if ( docID%1000 == 0 )
 				System.err.println( "Indexed " + docID + " files" );
-			index.docIDs.put( "" + docID, f.getName() );
+			index.putdDocID( docID, f.getName() );
 			try {
 			    //  Read the first few bytes of the file to see if it is
 			    // likely to be a PDF
@@ -100,7 +102,7 @@ public class Indexer {
 					String token = tok.nextToken();
 					insertIntoIndex( token, docID, offset++ );
 			    }
-			    index.docLengths.put( "" + docID, offset );
+			    index.putDocLength(docID, offset );
 			    reader.close();
 			}
 			catch ( IOException e ) {
@@ -139,6 +141,7 @@ public class Indexer {
      */
     public void insertIntoIndex( String token, int docID,  int offset ) {
     	index.insert( token, docID, offset );
+        biwordIndex.insert( token, docID, offset );
     }
 }
 
