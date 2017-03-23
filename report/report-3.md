@@ -208,4 +208,9 @@ Ding_How                                | 0,00361 | 2           |
 ### Conclusions
 
 * We note that the set of documents retrieved is the same as if we use Unigram and Phrase Query (Assignment 1).
-* We note that ...
+* We note that bigram might work better for some examples, but can underperform for other examples:
+    - 'zombie attack': Overall, wwe can say that performance decreased when using bigram.
+    - 'money transfer': Performance is the same. However for the bigram we retrieve too few documents!
+    - 'vegan health food': Bigram model increases notably the performance of the search engine.
+
+We note that sometimes the bigram model might miss some documents, since it is restrictive in the sense that it forces certain bigrams to appear (not on individual words). However, in the case of the last query, the bigram model performs much better. This might be because the words alone do not convey the whole information need, but the bigram model sort of does.
