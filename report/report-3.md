@@ -108,6 +108,8 @@ Scream                      | 0,27401 | 0           |
 StevenWong                  | 0,25507 | 0           |
 
 
+![zombie unigram](prerec/zombie_uni.png)
+
 * Bigram
 
 _Found 14 matching document(s) in 0 milliseconds_
@@ -125,6 +127,7 @@ Lame_pages                      | 0,13449| 0            |
 Zombie_Attack_Response_Guide    | 0,11487| 1            |
 Explore                         | 0,11297| 0            |
 
+![zombie bigram](prerec/zombie_bi.png)
 
 ### Query 'money transfer'
 
@@ -145,6 +148,9 @@ Transfer_Student_Association | 0,28222 | 0                              |
 NinadelRosario               | 0,23137 | 0                              |
 AnthonyParisi                | 0,22829 | 0                              |
 
+![money transfer unigram](prerec/moneytransfer_uni.png)
+
+
 * Bigram
 
 _Found 2 matching document(s) in 0 milliseconds_
@@ -154,6 +160,7 @@ Document                        | Score   | Relevance   |
 Wells_Fargo_Controversy         | 0,32177 | 1           |
 Selisa_Romero                   | 0,16574 | 0           |
 
+![money transfer bigram](prerec/moneytransfer_bi.png)
 
 
 
@@ -176,6 +183,8 @@ Thai_2k                         | 0,42183 | 0         |
 The_Co-Op                       | 0,42183 | 0         |
 NicoletteD                      | 0,35932 | 1         |
 
+![vegan food health unigram](prerec/vegan_uni.png)
+
 * Bigram
 
 _Found 12 matching document(s) in 0 milliseconds_
@@ -193,10 +202,10 @@ Boycott%2C_Divestment%2C_And_Sanctions  | 0,00523 | 0           |
 Raja%27s_Tandoor                        | 0,00396 | 2           |
 Ding_How                                | 0,00361 | 2           |
 
+![vegan food health bigram](prerec/vegan_bi.png)
+
 
 ### Conclusions
 
 * We note that the set of documents retrieved is the same as if we use Unigram and Phrase Query (Assignment 1).
-
-
-TODO: Plot graphs + comment them
+* We note that ...
